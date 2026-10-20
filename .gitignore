@@ -1,0 +1,14 @@
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+data/runtime/
+data/index/
+chroma-data/
+*.log
+.DS_Store
+frontend/node_modules/
+frontend/dist/

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Helpdesk Support</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <span class="app-title">Helpdesk Support</span>
+    <span id="providerBadge" class="badge badge-mock">Provider: loading…</span>
+  </header>
+
+  <div class="layout">
+    <!-- 左ペイン: Ticket一覧 -->
+    <aside class="pane-left">
+      <div class="filter-row">
+        <input id="filterStatus" type="text" placeholder="ステータスで絞り込み" />
+        <button id="btnFilter">絞り込み</button>
+      </div>
+      <ul id="ticketList" class="ticket-list">
+        <li class="placeholder">読み込み中…</li>
+      </ul>
+      <div class="pagination-row">
+        <button id="btnLoadMore" disabled>さらに読み込む</button>
+      </div>
+    </aside>
+
+    <!-- 右ペイン: Ticket詳細 + RAG -->
+    <main class="pane-right" id="detailPane">
+      <div id="noSelection" class="no-selection">
+        <p>左の一覧からチケットを選択してください</p>
+      </div>
+
+      <div id="ticketDetail" class="hidden">
+        <section class="detail-header">
+          <span id="detailId" class="ticket-id"></span>
+          <span id="detailStatus" class="status-badge"></span>
+        </section>
+        <h2 id="detailTitle"></h2>
+        <p id="detailDept" class="meta-text"></p>
+        <p id="detailDesc" class="description"></p>
+
+        <div class="action-row">
+          <button id="btnSearch" class="btn-secondary">🔍 関連文書を検索</button>
+          <button id="btnDraft" class="btn-primary">✏️ 回答案を作成</button>
+        </div>
+
+        <!-- 検索結果 -->
+        <section id="searchResults" class="hidden">
+          <h3>検索結果</h3>
+          <ul id="searchList" class="source-list"></ul>
+        </section>
+
+        <!-- 回答案 -->
+        <section id="draftSection" class="hidden">
+          <h3>回答案 <span class="draft-label">(Human Review が必要です)</span></h3>
+          <div class="warning-box">⚠️ この回答は AI が生成した下書きです。必ず内容を確認してから使用してください。自動送信はされません。</div>
+          <textarea id="draftText" rows="8"></textarea>
+          <h4>参照元</h4>
+          <ul id="citationList" class="source-list"></ul>
+          <p id="draftMeta" class="meta-text"></p>
+        </section>
+
+        <!-- エラー表示 -->
+        <div id="errorBox" class="error-box hidden"></div>
+
+        <!-- ローディング -->
+        <div id="loadingSpinner" class="loading hidden">処理中…</div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

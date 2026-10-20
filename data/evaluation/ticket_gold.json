@@ -1,0 +1,362 @@
+[
+  {
+    "ticket_id": "OBS-001",
+    "category": "権限・アカウント",
+    "priority": "通常",
+    "assigned_team": "Account Management"
+  },
+  {
+    "ticket_id": "OBS-002",
+    "category": "技術的障害",
+    "priority": "通常",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "OBS-003",
+    "category": "技術的障害",
+    "priority": "低",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "OBS-004",
+    "category": "技術的障害",
+    "priority": "通常",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "OBS-005",
+    "category": "技術的障害",
+    "priority": "通常",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "OBS-006",
+    "category": "技術的障害",
+    "priority": "緊急",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "OBS-007",
+    "category": "技術的障害",
+    "priority": "緊急",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "OBS-008",
+    "category": "技術的障害",
+    "priority": "通常",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "OBS-009",
+    "category": "技術的障害",
+    "priority": "通常",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "OBS-010",
+    "category": "備品・環境",
+    "priority": "低",
+    "assigned_team": "General Affairs"
+  },
+  {
+    "ticket_id": "OBS-011",
+    "category": "技術的障害",
+    "priority": "通常",
+    "assigned_team": "Application Support"
+  },
+  {
+    "ticket_id": "OBS-012",
+    "category": "権限・アカウント",
+    "priority": "通常",
+    "assigned_team": "Account Management"
+  },
+  {
+    "ticket_id": "OBS-013",
+    "category": "その他",
+    "priority": "緊急",
+    "assigned_team": "Security"
+  },
+  {
+    "ticket_id": "OBS-014",
+    "category": "問い合わせ・相談",
+    "priority": "低",
+    "assigned_team": "Application Support"
+  },
+  {
+    "ticket_id": "OBS-015",
+    "category": "技術的障害",
+    "priority": "低",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "OBS-016",
+    "category": "権限・アカウント",
+    "priority": "通常",
+    "assigned_team": "Account Management"
+  },
+  {
+    "ticket_id": "OBS-017",
+    "category": "技術的障害",
+    "priority": "通常",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "OBS-018",
+    "category": "権限・アカウント",
+    "priority": "通常",
+    "assigned_team": "Account Management"
+  },
+  {
+    "ticket_id": "OBS-019",
+    "category": "技術的障害",
+    "priority": "通常",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "OBS-020",
+    "category": "技術的障害",
+    "priority": "緊急",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-001",
+    "category": "権限・アカウント",
+    "priority": "通常",
+    "assigned_team": "Account Management"
+  },
+  {
+    "ticket_id": "DEV-002",
+    "category": "技術的障害",
+    "priority": "通常",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-003",
+    "category": "備品・環境",
+    "priority": "通常",
+    "assigned_team": "General Affairs"
+  },
+  {
+    "ticket_id": "DEV-004",
+    "category": "技術的障害",
+    "priority": "通常",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-005",
+    "category": "技術的障害",
+    "priority": "低",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-006",
+    "category": "その他",
+    "priority": "低",
+    "assigned_team": null
+  },
+  {
+    "ticket_id": "DEV-007",
+    "category": "技術的障害",
+    "priority": "通常",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-008",
+    "category": "権限・アカウント",
+    "priority": "通常",
+    "assigned_team": "Account Management"
+  },
+  {
+    "ticket_id": "DEV-009",
+    "category": "技術的障害",
+    "priority": "通常",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-010",
+    "category": "技術的障害",
+    "priority": "低",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-011",
+    "category": "権限・アカウント",
+    "priority": "通常",
+    "assigned_team": "Account Management"
+  },
+  {
+    "ticket_id": "DEV-012",
+    "category": "権限・アカウント",
+    "priority": "通常",
+    "assigned_team": "Account Management"
+  },
+  {
+    "ticket_id": "DEV-013",
+    "category": "その他",
+    "priority": "緊急",
+    "assigned_team": "Security"
+  },
+  {
+    "ticket_id": "DEV-014",
+    "category": "技術的障害",
+    "priority": "通常",
+    "assigned_team": "Application Support"
+  },
+  {
+    "ticket_id": "DEV-015",
+    "category": "備品・環境",
+    "priority": "低",
+    "assigned_team": "General Affairs"
+  },
+  {
+    "ticket_id": "DEV-016",
+    "category": "問い合わせ・相談",
+    "priority": "低",
+    "assigned_team": "Application Support"
+  },
+  {
+    "ticket_id": "DEV-017",
+    "category": "技術的障害",
+    "priority": "通常",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-018",
+    "category": "権限・アカウント",
+    "priority": "低",
+    "assigned_team": "Account Management"
+  },
+  {
+    "ticket_id": "DEV-019",
+    "category": "技術的障害",
+    "priority": "通常",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-020",
+    "category": "問い合わせ・相談",
+    "priority": "低",
+    "assigned_team": "Security"
+  },
+  {
+    "ticket_id": "DEV-021",
+    "category": "問い合わせ・相談",
+    "priority": "低",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-022",
+    "category": "技術的障害",
+    "priority": "緊急",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-023",
+    "category": "技術的障害",
+    "priority": "通常",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-024",
+    "category": "権限・アカウント",
+    "priority": "低",
+    "assigned_team": "Account Management"
+  },
+  {
+    "ticket_id": "DEV-025",
+    "category": "問い合わせ・相談",
+    "priority": "低",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-026",
+    "category": "備品・環境",
+    "priority": "緊急",
+    "assigned_team": "General Affairs"
+  },
+  {
+    "ticket_id": "DEV-027",
+    "category": "権限・アカウント",
+    "priority": "通常",
+    "assigned_team": "Security"
+  },
+  {
+    "ticket_id": "DEV-028",
+    "category": "備品・環境",
+    "priority": "緊急",
+    "assigned_team": "General Affairs"
+  },
+  {
+    "ticket_id": "DEV-029",
+    "category": "技術的障害",
+    "priority": "緊急",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-030",
+    "category": "権限・アカウント",
+    "priority": "通常",
+    "assigned_team": "Account Management"
+  },
+  {
+    "ticket_id": "DEV-031",
+    "category": "技術的障害",
+    "priority": "低",
+    "assigned_team": null
+  },
+  {
+    "ticket_id": "DEV-032",
+    "category": "備品・環境",
+    "priority": "低",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-033",
+    "category": "技術的障害",
+    "priority": "通常",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-034",
+    "category": "権限・アカウント",
+    "priority": "通常",
+    "assigned_team": "Account Management"
+  },
+  {
+    "ticket_id": "DEV-035",
+    "category": "技術的障害",
+    "priority": "緊急",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-036",
+    "category": "権限・アカウント",
+    "priority": "通常",
+    "assigned_team": "Account Management"
+  },
+  {
+    "ticket_id": "DEV-037",
+    "category": "問い合わせ・相談",
+    "priority": "低",
+    "assigned_team": "Application Support"
+  },
+  {
+    "ticket_id": "DEV-038",
+    "category": "技術的障害",
+    "priority": "通常",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-039",
+    "category": "技術的障害",
+    "priority": "緊急",
+    "assigned_team": "IT Support"
+  },
+  {
+    "ticket_id": "DEV-040",
+    "category": "問い合わせ・相談",
+    "priority": "低",
+    "assigned_team": "Application Support"
+  }
+]

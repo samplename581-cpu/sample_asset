@@ -1,0 +1,196 @@
+{
+  "categories": [
+    {
+      "category_id": "CAT01",
+      "category_name": "技術的障害",
+      "description": "ネットワーク・システム・端末など、IT機器やインフラに起因する障害。業務の一時停止や遅延が発生している状態を含む。",
+      "example_keywords": "ネット, VPN, システムエラー, ログインできない, 動かない"
+    },
+    {
+      "category_id": "CAT02",
+      "category_name": "権限・アカウント",
+      "description": "アカウントの発行・変更・停止、パスワードリセット、共有フォルダ・システムへのアクセス権申請など。",
+      "example_keywords": "パスワード, アクセス権, アカウント, 権限, 追加, 削除"
+    },
+    {
+      "category_id": "CAT03",
+      "category_name": "備品・環境",
+      "description": "PC・周辺機器の貸与・交換・故障対応、デスク周りの環境整備、消耗品の補充など総務が主担当となる内容。",
+      "example_keywords": "PC, モニター, キーボード, 備品, 届いた, 壊れた"
+    },
+    {
+      "category_id": "CAT04",
+      "category_name": "問い合わせ・相談",
+      "description": "業務手順や社内ルール、システム操作方法に関する質問・相談。緊急度は基本的に低い。",
+      "example_keywords": "方法を教えて, 手順, 確認したい, 相談, どうすれば"
+    },
+    {
+      "category_id": "CAT05",
+      "category_name": "その他",
+      "description": "上記4カテゴリに該当しない内容。対応要否を確認のうえ、適切な部署へルーティングする。",
+      "example_keywords": "その他, 不明, 判断できない"
+    }
+  ],
+  "priorities": [
+    {
+      "priority_id": "P01",
+      "priority_name": "緊急",
+      "definition": "業務停止・複数ユーザーへの影響・セキュリティリスク・役員/重要イベントへの影響のいずれかを満たす。即時対応が必要。",
+      "target_response_time": "30分以内",
+      "escalation_required": "必須",
+      "example": "全社VPN障害、ランサムウェア感染疑い、経営会議直前のシステム停止"
+    },
+    {
+      "priority_id": "P02",
+      "priority_name": "通常",
+      "definition": "業務に支障があるが代替手段がある、または影響範囲が限定的。当日中または翌営業日中に対応。",
+      "target_response_time": "4時間以内（当日）",
+      "escalation_required": "状況による",
+      "example": "自分のPCがフリーズ、アクセス権の追加申請、ソフトのインストール依頼"
+    },
+    {
+      "priority_id": "P03",
+      "priority_name": "低",
+      "definition": "現時点で業務への直接的影響はない。計画的に対応可能。",
+      "target_response_time": "3営業日以内",
+      "escalation_required": "不要",
+      "example": "キーボードの文字が薄い、画面の輝度調整方法の問い合わせ"
+    }
+  ],
+  "support-teams": [
+    {
+      "team_id": "T01",
+      "team_name": "IT Support",
+      "primary_scope": "ネットワーク障害・VPN・端末トラブル・共有フォルダ・社内システム全般",
+      "contact": "itsupport@example.com / 内線: 1001",
+      "notes": ""
+    },
+    {
+      "team_id": "T02",
+      "team_name": "Account Management",
+      "primary_scope": "アカウント発行・停止・パスワードリセット・権限管理",
+      "contact": "account@example.com / 内線: 1002",
+      "notes": ""
+    },
+    {
+      "team_id": "T03",
+      "team_name": "General Affairs",
+      "primary_scope": "PC貸与・返却・備品・消耗品・座席・環境整備",
+      "contact": "soumu@example.com / 内線: 1003",
+      "notes": ""
+    },
+    {
+      "team_id": "T04",
+      "team_name": "Security",
+      "primary_scope": "セキュリティインシデント・不審メール・ウイルス・情報漏洩対応",
+      "contact": "security@example.com / 内線: 1004",
+      "notes": "エスカレーション時は即時連絡"
+    },
+    {
+      "team_id": "T05",
+      "team_name": "Application Support",
+      "primary_scope": "社内業務アプリ・SaaS・ライセンス管理・ソフトウェアインストール",
+      "contact": "appsupport@example.com / 内線: 1005",
+      "notes": ""
+    },
+    {
+      "team_id": "T06",
+      "team_name": "Department Lead",
+      "primary_scope": "対応部署の判断が困難な場合・複数部署にまたがる場合の調整",
+      "contact": "lead@example.com / 内線: 1006",
+      "notes": "最終判断者"
+    }
+  ],
+  "services": [
+    {
+      "service_id": "SVC01",
+      "service_name": "VPN接続",
+      "description": "社外からの社内ネットワーク接続",
+      "primary_team": "IT Support",
+      "secondary_team": "Security",
+      "typical_priority": "通常",
+      "notes": "障害時は緊急に昇格"
+    },
+    {
+      "service_id": "SVC02",
+      "service_name": "PC貸与・返却",
+      "description": "端末の新規貸与・交換・返却手続き",
+      "primary_team": "General Affairs",
+      "secondary_team": "IT Support",
+      "typical_priority": "通常",
+      "notes": ""
+    },
+    {
+      "service_id": "SVC03",
+      "service_name": "アカウント管理",
+      "description": "新規発行・停止・パスワードリセット",
+      "primary_team": "Account Management",
+      "secondary_team": "IT Support",
+      "typical_priority": "通常",
+      "notes": "退職者は即日停止"
+    },
+    {
+      "service_id": "SVC04",
+      "service_name": "共有フォルダ",
+      "description": "アクセス権付与・フォルダ作成",
+      "primary_team": "IT Support",
+      "secondary_team": "Application Support",
+      "typical_priority": "通常",
+      "notes": ""
+    },
+    {
+      "service_id": "SVC05",
+      "service_name": "セキュリティ対応",
+      "description": "インシデント・不審メール・ウイルス",
+      "primary_team": "Security",
+      "secondary_team": "IT Support",
+      "typical_priority": "緊急",
+      "notes": "即時エスカレーション"
+    },
+    {
+      "service_id": "SVC06",
+      "service_name": "ソフトウェアインストール",
+      "description": "業務アプリ・ライセンス申請・導入",
+      "primary_team": "Application Support",
+      "secondary_team": "IT Support",
+      "typical_priority": "通常",
+      "notes": "承認フロー必要"
+    },
+    {
+      "service_id": "SVC07",
+      "service_name": "メール設定",
+      "description": "新規メールアドレス・転送・署名",
+      "primary_team": "Account Management",
+      "secondary_team": "IT Support",
+      "typical_priority": "通常",
+      "notes": ""
+    },
+    {
+      "service_id": "SVC08",
+      "service_name": "プリンター・複合機",
+      "description": "印刷トラブル・ドライバ設定",
+      "primary_team": "IT Support",
+      "secondary_team": "General Affairs",
+      "typical_priority": "低",
+      "notes": ""
+    },
+    {
+      "service_id": "SVC09",
+      "service_name": "備品・消耗品",
+      "description": "マウス・キーボード等の交換申請",
+      "primary_team": "General Affairs",
+      "secondary_team": "",
+      "typical_priority": "低",
+      "notes": ""
+    },
+    {
+      "service_id": "SVC10",
+      "service_name": "社内システム全般",
+      "description": "業務システムのエラー・動作不良",
+      "primary_team": "Application Support",
+      "secondary_team": "IT Support",
+      "typical_priority": "通常",
+      "notes": "再現手順の添付を推奨"
+    }
+  ]
+}

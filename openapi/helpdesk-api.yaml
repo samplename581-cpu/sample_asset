@@ -1,0 +1,317 @@
+openapi: 3.1.0
+info:
+  title: Helpdesk RAG Starter API
+  version: 0.1.0
+  description: Student-facing mock helpdesk and optional RAG API
+servers:
+  - url: http://127.0.0.1:8000/api/v1
+paths:
+  /health/live:
+    get:
+      operationId: getLiveness
+      tags: [health]
+      responses:
+        "200":
+          description: Process is alive
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+  /health/ready:
+    get:
+      operationId: getReadiness
+      tags: [health]
+      responses:
+        "200":
+          description: Required local resources are ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Readiness"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /tickets:
+    get:
+      operationId: listTickets
+      tags: [tickets]
+      parameters:
+        - {name: status, in: query, schema: {type: string, maxLength: 40}}
+        - {name: category, in: query, schema: {type: string, maxLength: 40}}
+        - {name: assigned_team, in: query, schema: {type: string, maxLength: 80}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
+        - {name: cursor, in: query, schema: {type: string, maxLength: 500}}
+      responses:
+        "200":
+          description: Ticket page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketPage"
+        "422": {$ref: "#/components/responses/ValidationError"}
+    post:
+      operationId: createTicket
+      tags: [tickets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/TicketCreate"}
+      responses:
+        "201":
+          description: Created ticket
+          headers:
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Ticket"}
+        "422": {$ref: "#/components/responses/ValidationError"}
+  /tickets/{ticket_id}:
+    parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema: {type: string, pattern: "^[A-Z0-9][A-Z0-9_-]{2,39}$"}
+    get:
+      operationId: getTicket
+      tags: [tickets]
+      responses:
+        "200":
+          description: Ticket
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Ticket"}
+        "404": {$ref: "#/components/responses/NotFound"}
+    patch:
+      operationId: updateTicket
+      tags: [tickets]
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema: {$ref: "#/components/schemas/TicketUpdate"}
+      responses:
+        "200":
+          description: Updated ticket
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Ticket"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationError"}
+  /masters/{master_name}:
+    get:
+      operationId: getMaster
+      tags: [masters]
+      parameters:
+        - name: master_name
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [categories, priorities, support-teams, services]
+      responses:
+        "200":
+          description: Master entries
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [name, items]
+                properties:
+                  name: {type: string}
+                  items: {type: array, items: {type: object, additionalProperties: true}}
+        "404": {$ref: "#/components/responses/NotFound"}
+  /search:
+    post:
+      operationId: searchKnowledge
+      tags: [rag]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/SearchRequest"}
+      responses:
+        "200":
+          description: Ranked chunks
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SearchResponse"}
+        "422": {$ref: "#/components/responses/ValidationError"}
+        "503": {$ref: "#/components/responses/ServiceUnavailable"}
+  /answers/draft:
+    post:
+      operationId: createDraftAnswer
+      tags: [rag]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/DraftAnswerRequest"}
+      responses:
+        "200":
+          description: Human-reviewable draft
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/DraftAnswerResponse"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/ValidationError"}
+        "429":
+          description: Provider rate limit
+          headers:
+            Retry-After: {schema: {type: integer}}
+          content:
+            application/problem+json:
+              schema: {$ref: "#/components/schemas/Problem"}
+        "503": {$ref: "#/components/responses/ServiceUnavailable"}
+components:
+  schemas:
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status: {type: string, const: ok}
+    Readiness:
+      type: object
+      required: [status, checks]
+      properties:
+        status: {type: string, enum: [ready, not_ready]}
+        checks:
+          type: object
+          additionalProperties: {type: string}
+    Ticket:
+      type: object
+      additionalProperties: false
+      required: [ticket_id, title, description, created_at, requester_department, status, version]
+      properties:
+        ticket_id: {type: string, maxLength: 40}
+        title: {type: string, minLength: 1, maxLength: 200}
+        description: {type: string, minLength: 1, maxLength: 10000}
+        created_at: {type: string, format: date-time}
+        requester_department: {type: string, maxLength: 100}
+        category: {type: [string, "null"], maxLength: 40}
+        priority: {type: [string, "null"], maxLength: 40}
+        status: {type: string, maxLength: 40}
+        assigned_team: {type: [string, "null"], maxLength: 80}
+        resolution: {type: [string, "null"], maxLength: 10000}
+        version: {type: integer, minimum: 1}
+    TicketCreate:
+      type: object
+      additionalProperties: false
+      required: [title, description, requester_department]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 200}
+        description: {type: string, minLength: 1, maxLength: 10000}
+        requester_department: {type: string, minLength: 1, maxLength: 100}
+    TicketUpdate:
+      type: object
+      additionalProperties: false
+      required: [version]
+      minProperties: 2
+      properties:
+        category: {type: [string, "null"], maxLength: 40}
+        priority: {type: [string, "null"], maxLength: 40}
+        status: {type: string, maxLength: 40}
+        assigned_team: {type: [string, "null"], maxLength: 80}
+        resolution: {type: [string, "null"], maxLength: 10000}
+        version: {type: integer, minimum: 1}
+    TicketPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items: {type: array, items: {$ref: "#/components/schemas/Ticket"}}
+        next_cursor: {type: [string, "null"]}
+    SearchRequest:
+      type: object
+      additionalProperties: false
+      required: [query]
+      properties:
+        query: {type: string, minLength: 1, maxLength: 4000}
+        top_k: {type: integer, minimum: 1, maximum: 20, default: 5}
+        document_types:
+          type: array
+          maxItems: 10
+          uniqueItems: true
+          items: {type: string, maxLength: 40}
+    SearchItem:
+      type: object
+      required: [chunk_id, document_id, title, snippet, score, source]
+      properties:
+        chunk_id: {type: string}
+        document_id: {type: string}
+        title: {type: string}
+        snippet: {type: string, maxLength: 1000}
+        score: {type: number, minimum: -1, maximum: 1}
+        source: {type: string}
+    SearchResponse:
+      type: object
+      required: [query, items]
+      properties:
+        query: {type: string}
+        items: {type: array, items: {$ref: "#/components/schemas/SearchItem"}}
+    DraftAnswerRequest:
+      type: object
+      description: ticket_idとquestionは必ずどちらか一方だけを指定する。両方指定または両方未指定は422。
+      additionalProperties: false
+      oneOf:
+        - required: [ticket_id]
+        - required: [question]
+      properties:
+        ticket_id: {type: string, maxLength: 40}
+        question: {type: string, minLength: 1, maxLength: 4000}
+        top_k: {type: integer, minimum: 1, maximum: 10, default: 5}
+    Citation:
+      type: object
+      required: [citation_id, chunk_id, document_id, title, source, snippet, score]
+      properties:
+        citation_id: {type: string, pattern: "^S[1-9][0-9]*$"}
+        chunk_id: {type: string}
+        document_id: {type: string}
+        title: {type: string}
+        source: {type: string}
+        snippet: {type: string, maxLength: 1000}
+        score: {type: number, minimum: -1, maximum: 1}
+    DraftAnswerResponse:
+      type: object
+      required: [draft_answer, citations, needs_human_confirmation, missing_information, metadata]
+      properties:
+        draft_answer: {type: string}
+        citations: {type: array, items: {$ref: "#/components/schemas/Citation"}}
+        needs_human_confirmation: {type: boolean, const: true}
+        missing_information: {type: array, items: {type: string}}
+        metadata:
+          type: object
+          required: [provider, model, request_id]
+          properties:
+            provider: {type: string}
+            model: {type: string}
+            request_id: {type: string}
+    Problem:
+      type: object
+      required: [type, title, status, detail, request_id]
+      properties:
+        type: {type: string, format: uri-reference}
+        title: {type: string}
+        status: {type: integer, minimum: 400, maximum: 599}
+        detail: {type: string}
+        request_id: {type: string}
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/problem+json:
+          schema: {$ref: "#/components/schemas/Problem"}
+    Conflict:
+      description: Version conflict
+      content:
+        application/problem+json:
+          schema: {$ref: "#/components/schemas/Problem"}
+    ValidationError:
+      description: Invalid request
+      content:
+        application/problem+json:
+          schema: {$ref: "#/components/schemas/Problem"}
+    ServiceUnavailable:
+      description: Required provider or local resource is unavailable
+      content:
+        application/problem+json:
+          schema: {$ref: "#/components/schemas/Problem"}

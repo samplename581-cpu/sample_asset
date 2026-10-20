@@ -1,0 +1,45 @@
+name: helpdesk-rag
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: helpdesk-rag:local
+    env_file:
+      - ${APP_ENV_FILE:-.env}
+    environment:
+      APP_ENV: container
+      APP_HOST: 0.0.0.0
+      APP_PORT: "8000"
+      LLM_PROVIDER: watsonx
+      EMBEDDING_PROVIDER: watsonx
+      VECTOR_STORE_PROVIDER: milvus
+      SEED_DATA_DIR: /app/data/seed
+      RUNTIME_DATA_DIR: /app/data/runtime
+      INDEX_DIR: /app/data/index
+    ports:
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
+    volumes:
+      - helpdesk-runtime:/app/data/runtime
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  helpdesk-runtime:

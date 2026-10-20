@@ -1,0 +1,542 @@
+[
+  {
+    "ticket_id": "OBS-001",
+    "title": "パスワードを忘れた",
+    "description": "社内システムのパスワードを忘れてしまい、ログインできません。急ぎで対応をお願いします。",
+    "created_at": "2025-04-10T09:00:00+09:00",
+    "requester_department": "営業部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-002",
+    "title": "VPNにつながらない",
+    "description": "在宅勤務中にVPNが接続できなくなりました。昨日まで問題なく使えていました。",
+    "created_at": "2025-04-10T09:15:00+09:00",
+    "requester_department": "マーケティング部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-003",
+    "title": "システムが重い",
+    "description": "システムが重いです。",
+    "created_at": "2025-04-10T09:30:00+09:00",
+    "requester_department": "経理部",
+    "status": "様子見",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-004",
+    "title": "PC到着・VPN・権限設定一式",
+    "description": "新しいPCが届いたので、初期設定とVPN接続、社内システムの権限設定をまとめてお願いします。",
+    "created_at": "2025-04-10T09:45:00+09:00",
+    "requester_department": "開発部",
+    "status": "対応中",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-005",
+    "title": "共有フォルダが開けない（私だけ？）",
+    "description": "共有フォルダが開きません。今のところ私だけだと思います。",
+    "created_at": "2025-04-10T10:00:00+09:00",
+    "requester_department": "人事部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-006",
+    "title": "共有フォルダが開けない",
+    "description": "先ほどから共有フォルダにアクセスできなくなっています。",
+    "created_at": "2025-04-10T10:03:00+09:00",
+    "requester_department": "開発部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-007",
+    "title": "共有フォルダが突然アクセス不可",
+    "description": "今朝から共有フォルダが開けなくなっています。業務に支障が出ています。",
+    "created_at": "2025-04-10T10:07:00+09:00",
+    "requester_department": "営業部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-008",
+    "title": "メールが届かない",
+    "description": "朝から外部のお客様からのメールが届いていません。",
+    "created_at": "2025-04-10T11:00:00+09:00",
+    "requester_department": "営業部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-009",
+    "title": "受信メールが来ない",
+    "description": "本日届くはずのメールが一件もありません。スパムフォルダも確認済みです。",
+    "created_at": "2025-04-10T11:10:00+09:00",
+    "requester_department": "営業部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-010",
+    "title": "PCの交換を申請したい",
+    "description": "使用しているPCの動作が遅く、交換を検討しています。申請方法を教えてください。",
+    "created_at": "2025-04-10T12:00:00+09:00",
+    "requester_department": "経理部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-011",
+    "title": "Teamsが突然使えなくなった",
+    "description": "Teamsが起動しなくなりました。再起動しても改善しません。",
+    "created_at": "2025-04-10T12:20:00+09:00",
+    "requester_department": "人事部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-012",
+    "title": "退職者のアカウントを無効化してほしい",
+    "description": "今月末に退職する社員のアカウントを退職日当日に無効化してください。",
+    "created_at": "2025-04-10T13:00:00+09:00",
+    "requester_department": "人事部",
+    "status": "対応中",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-013",
+    "title": "不審なメールを受信した",
+    "description": "見知らぬ送信者からURLが記載されたメールが来ました。クリックしていません。",
+    "created_at": "2025-04-10T13:30:00+09:00",
+    "requester_department": "営業部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-014",
+    "title": "ソフトのインストールを申請したい",
+    "description": "業務でAdobe Acrobatが必要です。インストールを申請したいです。",
+    "created_at": "2025-04-10T14:00:00+09:00",
+    "requester_department": "デザイン部",
+    "status": "対応中",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-015",
+    "title": "プリンターで印刷できない",
+    "description": "フロアのプリンターで印刷しようとするとエラーが出て印刷できません。",
+    "created_at": "2025-04-10T14:30:00+09:00",
+    "requester_department": "経理部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-016",
+    "title": "上司変更に伴う権限引き継ぎ",
+    "description": "担当マネージャーが変わったため、承認権限の引き継ぎ設定をお願いします。",
+    "created_at": "2025-04-10T15:00:00+09:00",
+    "requester_department": "開発部",
+    "status": "対応中",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-017",
+    "title": "社外からシステムにアクセスできない",
+    "description": "出張先のホテルからVPN経由で社内システムに接続しようとしましたがつながりません。",
+    "created_at": "2025-04-10T15:30:00+09:00",
+    "requester_department": "営業部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-018",
+    "title": "新人社員のPC・アカウントを準備してほしい",
+    "description": "来週月曜日に入社する新人社員（2名）のPC・メールアカウント・権限を準備してください。",
+    "created_at": "2025-04-10T16:00:00+09:00",
+    "requester_department": "人事部",
+    "status": "対応中",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-019",
+    "title": "Excelファイルが開けない",
+    "description": "共有フォルダ内の特定のExcelファイルが開けません。ファイルが壊れているかもしれません。",
+    "created_at": "2025-04-10T16:30:00+09:00",
+    "requester_department": "経理部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "OBS-020",
+    "title": "部門全体のVPNが突然切断された",
+    "description": "営業部のメンバー全員（約15名）が同時にVPN接続が切れました。業務が止まっています。",
+    "created_at": "2025-04-10T17:00:00+09:00",
+    "requester_department": "営業部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-001",
+    "title": "パスワードリセット依頼",
+    "description": "ログインできなくなったのでパスワードをリセットしてください。",
+    "created_at": "2025-04-14T08:30:00+09:00",
+    "requester_department": "経理部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-002",
+    "title": "VPN接続エラー",
+    "description": "VPNクライアントがエラーコード「0x800704C9」を表示して接続できません。",
+    "created_at": "2025-04-14T08:50:00+09:00",
+    "requester_department": "開発部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-003",
+    "title": "PCキーボードが反応しない",
+    "description": "PCのキーボードが全く反応しません。外付けを使えば作業できます。",
+    "created_at": "2025-04-14T09:10:00+09:00",
+    "requester_department": "デザイン部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-004",
+    "title": "システムエラー",
+    "description": "エラーが出ています。",
+    "created_at": "2025-04-14T09:30:00+09:00",
+    "requester_department": "営業部",
+    "status": "様子見",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-005",
+    "title": "動かない",
+    "description": "動きません。",
+    "created_at": "2025-04-14T09:50:00+09:00",
+    "requester_department": "法務部",
+    "status": "様子見",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-006",
+    "title": "おかしい",
+    "description": "なんかおかしいです。",
+    "created_at": "2025-04-14T10:10:00+09:00",
+    "requester_department": "総務部",
+    "status": "様子見",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-007",
+    "title": "新PC初期設定＋権限申請",
+    "description": "新しいPCが届いたので、初期設定・VPN・社内システムの権限設定を一括でお願いします。",
+    "created_at": "2025-04-14T10:30:00+09:00",
+    "requester_department": "マーケティング部",
+    "status": "対応中",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-008",
+    "title": "入社手続き一式（PC・アカウント・メール）",
+    "description": "来週入社の新人3名分の環境を準備してください。",
+    "created_at": "2025-04-14T10:50:00+09:00",
+    "requester_department": "人事部",
+    "status": "対応中",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-009",
+    "title": "メールが届いていない気がする",
+    "description": "昨日から外部からのメールが少ない気がします。気のせいかもしれません。",
+    "created_at": "2025-04-14T11:10:00+09:00",
+    "requester_department": "営業部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-010",
+    "title": "ファイルサーバーが少し遅い",
+    "description": "ここ数日ファイルサーバーへのアクセスが少し遅いです。急ぎではないです。",
+    "created_at": "2025-04-14T11:30:00+09:00",
+    "requester_department": "開発部",
+    "status": "対応中",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-011",
+    "title": "ログインできない（パスワード忘れ）",
+    "description": "パスワードを思い出せません。",
+    "created_at": "2025-04-14T11:50:00+09:00",
+    "requester_department": "経理部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-012",
+    "title": "アカウントがロックされた",
+    "description": "何度かパスワードを間違えたらアカウントがロックされてしまいました。",
+    "created_at": "2025-04-14T12:10:00+09:00",
+    "requester_department": "営業部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-013",
+    "title": "セキュリティインシデント：不審な添付ファイル",
+    "description": "知らない人から不審な添付ファイル付きメールが来ました。開いてしまいました。",
+    "created_at": "2025-04-14T12:30:00+09:00",
+    "requester_department": "営業部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-014",
+    "title": "Teamsの音声が聞こえない",
+    "description": "Teamsで会議をしていると音声が途切れます。",
+    "created_at": "2025-04-14T12:50:00+09:00",
+    "requester_department": "マーケティング部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-015",
+    "title": "プリンターのトナーがない",
+    "description": "フロアのプリンターがトナー切れです。",
+    "created_at": "2025-04-14T13:10:00+09:00",
+    "requester_department": "総務部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-016",
+    "title": "ソフトウェアライセンスの追加申請",
+    "description": "Adobe CC のライセンスを追加で2名分申請したいです。",
+    "created_at": "2025-04-14T13:30:00+09:00",
+    "requester_department": "デザイン部",
+    "status": "対応中",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-017",
+    "title": "VPNが頻繁に切断される",
+    "description": "在宅中にVPNが5〜10分おきに切断されます。再接続が面倒です。",
+    "created_at": "2025-04-14T13:50:00+09:00",
+    "requester_department": "開発部",
+    "status": "対応中",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-018",
+    "title": "共有カレンダーの権限追加",
+    "description": "部門の共有カレンダーの閲覧権限を追加してください。対象3名。",
+    "created_at": "2025-04-14T14:10:00+09:00",
+    "requester_department": "人事部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-019",
+    "title": "PCが突然シャットダウンする",
+    "description": "作業中にPCが突然シャットダウンします。1日に2〜3回発生します。",
+    "created_at": "2025-04-14T14:30:00+09:00",
+    "requester_department": "法務部",
+    "status": "対応中",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-020",
+    "title": "外部システムへのアクセス申請",
+    "description": "取引先のポータルサイトへのアクセスに会社IPの許可が必要です。",
+    "created_at": "2025-04-14T14:50:00+09:00",
+    "requester_department": "営業部",
+    "status": "対応中",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-021",
+    "title": "メール署名の変更方法",
+    "description": "Outlookのメール署名を会社規定のものに変更したいのですが、方法を教えてください。",
+    "created_at": "2025-04-14T15:10:00+09:00",
+    "requester_department": "マーケティング部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-022",
+    "title": "部門全体でVPN障害発生",
+    "description": "開発部全員（約20名）がVPNに接続できなくなりました。業務が完全に止まっています。",
+    "created_at": "2025-04-14T15:30:00+09:00",
+    "requester_department": "開発部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-023",
+    "title": "ファイルが誤って削除された",
+    "description": "大切なプロジェクトファイルが誰かに削除されたようです。復元できますか。",
+    "created_at": "2025-04-14T15:50:00+09:00",
+    "requester_department": "開発部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-024",
+    "title": "社内Wiki編集権限の申請",
+    "description": "社内Wikiの特定ページの編集権限をもらいたいです。",
+    "created_at": "2025-04-14T16:10:00+09:00",
+    "requester_department": "デザイン部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-025",
+    "title": "新規入社者向けオンボーディング手順を知りたい",
+    "description": "4月入社の新人へITオンボーディングを実施するため、手順書を共有してください。",
+    "created_at": "2025-04-14T16:30:00+09:00",
+    "requester_department": "人事部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-026",
+    "title": "PCのバッテリーが膨張している",
+    "description": "ノートPCのバッテリーが膨らんでいます。危険な状態かもしれません。",
+    "created_at": "2025-04-14T16:50:00+09:00",
+    "requester_department": "営業部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-027",
+    "title": "社外メールへの転送設定を申請したい",
+    "description": "業務の都合で外部メールアドレスへの自動転送を設定したいです。",
+    "created_at": "2025-04-14T17:10:00+09:00",
+    "requester_department": "法務部",
+    "status": "様子見",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-028",
+    "title": "会議室のプロジェクターが映らない",
+    "description": "第2会議室のプロジェクターにPCをつないでも映りません。今から会議があります。",
+    "created_at": "2025-04-14T17:30:00+09:00",
+    "requester_department": "総務部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-029",
+    "title": "社内システムにログインできない（複数名）",
+    "description": "午後から経理部の複数名が社内システムにログインできなくなっています。",
+    "created_at": "2025-04-14T17:50:00+09:00",
+    "requester_department": "経理部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-030",
+    "title": "研修用アカウントを発行してほしい",
+    "description": "来月の新人研修用に一時的なトレーニングアカウントを10件発行してください。",
+    "created_at": "2025-04-14T18:10:00+09:00",
+    "requester_department": "人事部",
+    "status": "対応中",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-031",
+    "title": "なんかエラーが出ている",
+    "description": "システムを開こうとしたらエラーが出ました。",
+    "created_at": "2025-04-14T18:30:00+09:00",
+    "requester_department": "総務部",
+    "status": "様子見",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-032",
+    "title": "画面が暗い",
+    "description": "PCの画面が暗くて見づらいです。",
+    "created_at": "2025-04-14T18:50:00+09:00",
+    "requester_department": "経理部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-033",
+    "title": "VPN繋がらない",
+    "description": "VPNが繋がらないです。",
+    "created_at": "2025-04-14T19:10:00+09:00",
+    "requester_department": "営業部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-034",
+    "title": "パスワードが通らない",
+    "description": "パスワードを入れてもはじかれます。",
+    "created_at": "2025-04-14T19:30:00+09:00",
+    "requester_department": "マーケティング部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-035",
+    "title": "役員PCが起動しない（重要会議30分前）",
+    "description": "役員のPCが起動しません。30分後に重要な社外プレゼンがあります。",
+    "created_at": "2025-04-14T19:50:00+09:00",
+    "requester_department": "総務部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-036",
+    "title": "アクセス権申請（退職者の権限削除）",
+    "description": "3月退職の社員のアクセス権がまだ残っているようです。",
+    "created_at": "2025-04-14T20:10:00+09:00",
+    "requester_department": "人事部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-037",
+    "title": "業務アプリのバージョンアップを依頼したい",
+    "description": "経費精算システムのバージョンが古く、新機能が使えません。",
+    "created_at": "2025-04-14T20:30:00+09:00",
+    "requester_department": "経理部",
+    "status": "対応中",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-038",
+    "title": "共有フォルダの容量がいっぱい",
+    "description": "部門の共有フォルダが容量いっぱいでファイルを保存できません。",
+    "created_at": "2025-04-14T20:50:00+09:00",
+    "requester_department": "デザイン部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-039",
+    "title": "社内システムのSSL証明書エラー",
+    "description": "社内システムにアクセスするとSSL証明書エラーが出ます。複数名から報告あり。",
+    "created_at": "2025-04-14T21:10:00+09:00",
+    "requester_department": "開発部",
+    "status": "完了",
+    "version": 1
+  },
+  {
+    "ticket_id": "DEV-040",
+    "title": "新システム導入の相談",
+    "description": "部門でSalesforceの導入を検討しています。社内の承認フローを教えてください。",
+    "created_at": "2025-04-14T21:30:00+09:00",
+    "requester_department": "営業部",
+    "status": "様子見",
+    "version": 1
+  }
+]
