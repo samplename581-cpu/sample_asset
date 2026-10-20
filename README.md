@@ -333,53 +333,6 @@ sample_asset/
 
 ---
 
-## Git公開・学生配布時の注意
-
-`sample_asset`単体をGit repositoryまたはZIPとして配布します。`assets/source/`の元Excelと`data/evaluation/`には正解ラベルが含まれるため、学生から閲覧可能です。これらは自己評価用教材として扱い、ブラインド評価用データには使用しません。非公開評価が必要な場合は、このrepository外で管理してください。
-
-| ファイル | 配布可否 |
-|---|---|
-| `assets/source/*.xlsx` | ✅ Seed再生成用。正解ラベルを含む教材 |
-| `data/seed/tickets_student.json` | ✅（正解ラベルなし） |
-| `data/seed/tickets.json` | ✅ 正解ラベルを含む教材 |
-| `data/evaluation/ticket_gold.json` | ✅ 自己評価用として扱う |
-| `.env`、API Key、更新済みruntime、cache | ❌ ZIP作成時に除外する |
-
-### ZIP作成時の除外必須ファイル
-
-`.gitignore` はZIP作成時に自動適用されません。ZIP化の前に以下を必ず除外してください。現在の`sample_asset/`には`.venv/`だけで約300MB弱あります。
-
-```text
-.env
-.venv/
-__pycache__/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-data/runtime/*  （.gitkeep は残してよい）
-*.log
-.DS_Store
-```
-
-ZIP作成例（`sample_asset`の親ディレクトリで実行）:
-
-```bash
-zip -r sample_asset.zip sample_asset/ \
-  -x "**/.git/*" \
-  -x "**/.env" \
-  -x "**/.venv/*" \
-  -x "**/__pycache__/*" \
-  -x "**/.pytest_cache/*" \
-  -x "**/.mypy_cache/*" \
-  -x "**/.ruff_cache/*" \
-  -x "**/data/runtime/*" \
-  -x "**/*.log" \
-  -x "**/.DS_Store"
-```
-
-Cloneまたは展開後に、repository外のファイルを参照せず`uv sync`、`make seed`、`make index`、`make dev`を実行できることを、配布前に別端末で必ず確認してください。
-
----
 
 ## LLM プロバイダーの切り替え
 
