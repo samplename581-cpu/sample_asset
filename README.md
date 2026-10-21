@@ -1,366 +1,261 @@
-# Helpdesk RAG 共通基盤
+# Helpdesk RAG Starter
 
-社内ヘルプデスク向け RAG（Retrieval-Augmented Generation）共通基盤 Starter です。
-標準構成は、Mac／Windows上でHTML Frontend・Python／FastAPI Backend・Chroma Vector DBを実行し、生成LLMとEmbeddingだけIBM Cloudのwatsonx.aiへ接続する構成です。IBM Cloudへのアプリ配備とwatsonx.dataは必須ではありません。Mock LLM／EmbeddingとNumPy検索は、API Keyなしでの学習・テスト用代替として残しています。
+ヘルプデスクの問い合わせに対して、関連文書を検索し、回答案を生成するRAGアプリケーションです。
 
-| 項目 | 標準仕様 |
+- Frontend: HTML / CSS / JavaScript
+- Backend: Python 3.14 / FastAPI
+- Vector DB: Chroma（ローカル保存）
+- LLM / Embedding: watsonx.ai、または動作確認用Mock
+
+最初はAPI Key不要のMock構成で起動します。起動を確認した後、必要に応じてwatsonx.aiへ切り替えてください。
+
+> このアプリケーションはローカル開発用です。`127.0.0.1`のまま起動し、ネットワークへ公開しないでください。
+
+## 1. 前提条件
+
+| 項目 | 条件 |
 |---|---|
-| 言語 | HTML、Python 3.14 |
-| フレームワーク | FastAPI |
-| LLM／Embedding | Watson Machine Learning（watsonx.ai Runtime）のwatsonx.ai API |
-| Project管理 | watsonx.ai Studio |
-| Project関連ストレージ | Cloud Object Storage |
-| Vector DB | Chroma（ローカル永続DB） |
-| アプリ実行場所 | 学生のMac／Windows |
-| コンテナ | 任意 |
+| OS | macOS、または64bit Windows 11 |
+| Terminal | macOS Terminal、またはWindows PowerShell |
+| Git／ZIP | GitでCloneできること。Gitを使わない場合はZIPを展開できること |
+| Browser | Chrome、Edge、Firefox、Safariのいずれか |
+| Network | Git repository、`astral.sh`、PyPIへHTTPS接続できること |
+| PC | 空き容量1GB以上、メモリ4GB以上 |
+| Port | TCP 8000番が空いていること |
 
-利用期間は2026年10月10日から12月31日までです。申請対象と数量算定は[IBM Cloud申請・利用見積](./docs/IBM_Cloud申請見積.md)を参照してください。
+Python、uv、Docker、Node.jsの事前インストールは不要です。セットアップの目安は30～90分です。
 
-利用者は8名（4名×2グループ）、IBM Cloudリージョンは東京（`jp-tok`）です。生成ModelとEmbedding Modelは東京リージョンで利用可能なものを選択します。
-
-標準構成のIBM Cloud申請対象は、`Watson Machine Learning（watsonx.ai Runtime）`、`watsonx.ai Studio`、`Cloud Object Storage`です。FastAPIが実行時に直接接続するのはwatsonx.ai Runtimeだけです。watsonx.data／Milvusは、クラウドVector DBも追加検証する場合の任意サービスです。
-
-> ⚠️ **注意**: 本アプリはローカル学習用です。ネットワーク上へ公開しないでください。デフォルトで認証なしで動作します。
-
----
-
-## Vector DBの選定結果
-
-| 候補 | Mac | Windows | 導入負荷 | 判定 |
-|---|---|---|---|---|
-| Chroma PersistentClient | 対応 | 対応 | `uv sync`だけ。別server不要 | **標準採用** |
-| Milvus Lite | 対応 | Windows nativeは公式対応外 | WindowsではLinux／containerが必要 | 標準不採用 |
-| Milvus Standalone | containerで対応 | Docker Desktop／WSL 2が必要 | 学習用PCには構成が重い | 発展用途 |
-| NumPy検索 | 対応 | 対応 | 最軽量だがVector DBではない | test用fallback |
-
-ChromaはApache 2.0のOSSで、`PersistentClient`がDBを`data/index/chroma/`へ自動永続化します。Embedding生成はChromaへ任せず、既存のMock／ローカルモデル／watsonx.ai Adapterで生成したVectorを登録します。
-
-- [Chroma PersistentClient](https://docs.trychroma.com/docs/run-chroma/cloud-client?lang=python)
-- [Chroma Python package](https://pypi.org/project/chromadb/)
-- [Milvus Lite supported environments](https://milvus.io/docs/milvus_lite.md)
-
-## セットアップの前提条件
-
-Mock + Chromaでの初回起動は**30～90分、トラブル対応を含めて2時間以内**を目安とします。watsonx.aiのサービス作成や社内ソフトウェア申請は、この時間に含みません。運営担当は演習開始前に申請と資格情報の配布を完了してください。
-
-### 必須
-
-| 項目 | 前提条件・確認内容 |
-|---|---|
-| OS | 組織でサポートされているmacOS、または64bit Windows 11 |
-| Shell | macOS Terminal、またはWindows PowerShell |
-| Git／ZIP | GitでCloneできること。Gitがない場合はZIPを展開できればよい |
-| Browser | 最新版のChrome、Edge、Firefox、Safariのいずれか |
-| ネットワーク | 初回構築時にGit repository、`astral.sh`、PyPI、`files.pythonhosted.org`へHTTPS接続できること |
-| 権限 | ユーザー領域へのuv／Python導入と、Clone先へのファイル作成・実行が許可されていること |
-| PCリソース | 空き容量1GB以上、メモリ4GB以上を目安とする |
-| Port | localhostのTCP 8000番が他processに使用されていないこと |
-
-Python、uv、Docker／Podman、Node.jsの事前インストールは不要です。Python 3.14とuvは以下の手順で導入します。Docker／Podmanは任意の発展構成でのみ使用します。
-
-### watsonx.aiを利用する場合のみ必要
-
-| 項目 | 運営担当から受領する値 |
-|---|---|
-| watsonx.ai Runtime | 東京リージョンで利用可能なProjectとサービス |
-| 認証 | IBM Cloud API Key、Project ID、watsonx.ai URL |
-| Model | 生成Model ID、Embedding Model ID、Embedding出力次元 |
-| ネットワーク | `https://jp-tok.ml.cloud.ibm.com`へのHTTPS／TCP 443接続 |
-
-API KeyなしでもMock + Chromaで画面、Ticket API、Vector検索、回答下書き生成を確認できます。組織Proxy、SSL inspection、PowerShell実行制限、ソフトウェア導入申請がある場合は、演習日前に運営担当へ確認してください。
-
-### 所要時間の目安
-
-| 作業 | 目安 |
-|---|---:|
-| CloneまたはZIP展開 | 5～10分 |
-| uv／Python 3.14導入 | 10～30分 |
-| Python依存関係導入 | 5～30分 |
-| Chroma Index構築 | 1～5分 |
-| Mock起動・画面確認 | 5～10分 |
-| watsonx.ai設定・接続確認 | 15～30分 |
-
-## 最短セットアップ（API Keyなし）
+## 2. セットアップ
 
 ### macOS（Terminal）
 
+repositoryの画面にある「Code」からClone URLを取得し、次の`<repository-url>`へ指定します。
+
 ```bash
-git clone <repository-url> sample_asset
-cd sample_asset
+git clone <repository-url> ~/sample_asset
+cd ~/sample_asset
 curl -LsSf https://astral.sh/uv/install.sh | sh
-# uvを認識させるため、新しいTerminalで同じdirectoryへ移動する
+```
+
+Terminalを開き直してから、Cloneしたディレクトリへ移動して続けます。
+
+```bash
+cd ~/sample_asset
 uv python install 3.14
 cp .env.example .env
-uv sync --extra dev
+uv sync
 uv run python backend/scripts/build_index.py
 uv run uvicorn helpdesk.main:app --app-dir backend/src --reload --host 127.0.0.1 --port 8000
 ```
 
 ### Windows（PowerShell）
 
-GitでCloneするか、`sample_asset.zip`をExplorerの「すべて展開」で`C:\work\sample_asset`などの短いpathへ展開します。
+repositoryの画面にある「Code」からClone URLを取得し、次の`<repository-url>`へ指定します。
 
 ```powershell
 git clone <repository-url> C:\work\sample_asset
 Set-Location C:\work\sample_asset
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-# uvを認識させるため、新しいPowerShellを開いてから次を実行する
+```
+
+PowerShellを開き直してから続けます。
+
+```powershell
+Set-Location C:\work\sample_asset
 uv python install 3.14
 Copy-Item .env.example .env
-uv sync --extra dev
+uv sync
 uv run python backend/scripts/build_index.py
 uv run uvicorn helpdesk.main:app --app-dir backend/src --reload --host 127.0.0.1 --port 8000
 ```
 
-起動後、ブラウザで `http://127.0.0.1:8000` を開くと最小 UI が表示されます。
+Gitを利用しない場合は、repositoryをZIPでダウンロードし、`C:\work\sample_asset`など日本語や空白を含まない短いパスへ展開してください。展開後は`uv python install 3.14`以降を実行します。
 
-Gitを使わずZIPから開始する場合も、展開後の`sample_asset`ディレクトリで同じコマンドを実行します。元ExcelからSeed JSONを再生成する場合は、同梱された`assets/source/`を使用して次を実行します。
+## 3. 起動確認
 
-```bash
-uv run python backend/scripts/export_seed_data.py
-uv run python backend/scripts/build_index.py
-```
+サーバーを起動したまま、ブラウザで次を開きます。
 
-### セットアップ完了条件
+- アプリケーション: <http://127.0.0.1:8000>
+- API仕様・試行画面: <http://127.0.0.1:8000/docs>
 
-次をすべて満たせばローカル環境構築は完了です。
+画面からナレッジ検索を実行し、検索結果が表示されることを確認してください。初期設定では、回答案に`[MOCK]`と表示されます。
 
-- `http://127.0.0.1:8000`で画面が表示される
-- `GET /api/v1/health/live`がHTTP 200と`{"status":"ok"}`を返す
-- `GET /api/v1/health/ready`がHTTP 200と`{"status":"ready", ...}`を返す
-- ナレッジ検索でエラーにならず検索結果が表示される
-- Terminal／PowerShellにAPI Keyやstack traceが表示されていない
-
-macOS:
+macOSでは別のTerminalで確認できます。
 
 ```bash
 curl http://127.0.0.1:8000/api/v1/health/live
 curl http://127.0.0.1:8000/api/v1/health/ready
 ```
 
-Windows PowerShell:
+Windowsでは別のPowerShellで確認できます。
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8000/api/v1/health/live
 Invoke-RestMethod http://127.0.0.1:8000/api/v1/health/ready
 ```
 
----
+次の両方が返ればセットアップ完了です。
 
-## 実行モード
+- `/health/live`: `status`が`ok`
+- `/health/ready`: HTTP 200かつ`status`が`ready`
 
-配布直後の`.env.example`は、Mock LLM／EmbeddingとローカルChromaで安全に動作確認できる設定です。本演習の標準は、ローカルFastAPI／Chromaからwatsonx.aiを利用する構成です。
+サーバーは、起動したTerminalまたはPowerShellで`Ctrl+C`を押すと停止します。
 
-| 環境変数 | デフォルト | 説明 |
-|---|---|---|
-| `LLM_PROVIDER` | `mock` | 標準は`watsonx`、ローカル確認は`mock`。`openai_compatible`は発展課題用 |
-| `EMBEDDING_PROVIDER` | `mock` | `mock` / `local` / `watsonx` |
-| `EMBEDDING_DIMENSION` | `64` | 利用するEmbedding modelと一致させる |
-| `VECTOR_STORE_PROVIDER` | `chroma` | `chroma`（標準）/ `numpy`（test）/ `milvus`（任意） |
-| `CHROMA_COLLECTION` | `helpdesk_knowledge` | ローカルcollection名 |
+## 4. watsonx.aiへの切り替え
 
-## watsonx.aiへ接続する標準起動
+watsonx.aiを利用する場合は、管理者から次の値を受け取ってください。
 
-LLMとEmbeddingにwatsonx.ai、Vector DBにローカルChromaを使用します。ChromaにAPI Keyやpasswordは不要です。
+- Project ID
+- IBM Cloud API Key
+- watsonx.ai URL
+- 生成モデルID
+- EmbeddingモデルIDと出力次元
 
-`.env.example`を`.env`へコピーし、次の値を変更します。API KeyはBrowserやFrontendへ渡さず、FastAPI processだけが読み取ります。
+依存関係を追加します。
+
+```bash
+uv sync --extra watsonx
+```
+
+`.env`の次の項目を編集します。
 
 ```dotenv
 LLM_PROVIDER=watsonx
 EMBEDDING_PROVIDER=watsonx
 VECTOR_STORE_PROVIDER=chroma
 WATSONX_URL=https://jp-tok.ml.cloud.ibm.com
-WATSONX_PROJECT_ID=運営担当から受領した値
-WATSONX_API_KEY=運営担当から受領した値
-WATSONX_MODEL_ID=使用する生成モデルID
-WATSONX_EMBEDDING_MODEL_ID=使用するEmbeddingモデルID
-EMBEDDING_DIMENSION=使用するEmbeddingモデルの出力次元
+WATSONX_PROJECT_ID=<Project ID>
+WATSONX_API_KEY=<API Key>
+WATSONX_MODEL_ID=<生成モデルID>
+WATSONX_EMBEDDING_MODEL_ID=<EmbeddingモデルID>
+EMBEDDING_DIMENSION=<Embeddingの出力次元>
 ```
 
-設定後、Chromaを同じEmbedding modelで再構築してから起動します。
+`.env`はGitへ登録しないでください。API KeyはFrontendへ記載せず、Terminalやチャットにも貼り付けないでください。
+
+Embeddingを変更したため、インデックスを再構築してから起動します。
 
 ```bash
-uv sync --extra watsonx --extra dev
 uv run python backend/scripts/build_index.py
-uv run uvicorn helpdesk.main:app --app-dir backend/src --host 127.0.0.1 --port 8000
+uv run uvicorn helpdesk.main:app --app-dir backend/src --reload --host 127.0.0.1 --port 8000
 ```
 
-起動確認:
+## 5. アプリケーション構成
 
-```bash
-curl http://127.0.0.1:8000/api/v1/health/ready
+```text
+Browser
+  └─ frontend/                 画面
+       ↓ HTTP / JSON
+FastAPI
+  └─ backend/src/helpdesk/
+       ├─ api/                 APIの入口
+       ├─ services/            Ticket・RAG処理
+       ├─ ports/               外部サービスのインターフェース
+       └─ adapters/            Chroma・watsonx.ai・Mockの実装
+            ↓
+data/seed/                     初期データ・検索文書
+data/index/chroma/             Chromaインデックス（自動生成）
 ```
 
-### 任意のIBM Cloud Milvus／コンテナ検証
+主なAPIは次のとおりです。
 
-現在の`compose.yaml`は、発展構成としてwatsonx.data Milvusへ接続する場合の定義です。ローカルChromaの標準手順にはDocker／Podmanは不要です。利用する場合だけ`.env.container.example`から`.env`を作成し、Docker／Podmanを起動します。
-
-```bash
-# .env設定後
-
-# Docker
-docker compose config
-docker compose up --build -d
-
-# Podmanの場合
-podman compose config
-podman compose up --build -d
-```
-
-設定ファイル名を変える場合は、`APP_ENV_FILE=.env.container` のように指定できます。`compose.yaml`はこのファイルをコンテナの環境変数として読み込みます。
-
-停止:
-
-```bash
-docker compose down
-# または podman compose down
-```
-
-API KeyやMilvus passwordはDockerfile、compose.yaml、Gitへ記録しません。本構成の詳細は`docs/要件定義書.md`と`docs/構成設計書.md`を参照してください。
-
-JSON Ticket Repositoryを使うMVPはUvicorn workerを1に固定します。`VECTOR_MIN_SCORE=0.45`は調整開始値であり、45%の正答率や確率を意味しません。Embedding modelと評価データごとに調整してください。
-
-### テスト用ローカルEmbeddingを使う場合
-
-```bash
-uv sync --extra local-embedding --extra dev
-# .env を編集して EMBEDDING_PROVIDER=local, EMBEDDING_DIMENSION=384 に変更
-make index   # インデックスを再構築
-make dev
-```
-
-Embedding provider、model、出力次元のいずれかを変更した場合は、必ず`build_index.py`を再実行してください。登録時と検索時で異なるEmbedding設定を使用してはいけません。
-
----
-
-## 動作確認コマンド
-
-```bash
-# ヘルスチェック
-curl http://127.0.0.1:8000/api/v1/health/live
-# → {"status":"ok"}
-
-curl http://127.0.0.1:8000/api/v1/health/ready
-# → {"status":"ready","checks":{...}}
-
-# チケット一覧
-curl "http://127.0.0.1:8000/api/v1/tickets?limit=5"
-
-# チケット作成
-curl -X POST http://127.0.0.1:8000/api/v1/tickets \
-  -H "Content-Type: application/json" \
-  -d '{"title":"VPN接続できない","description":"在宅勤務中にVPNが使えません","requester_department":"営業部"}'
-
-# ナレッジ検索
-curl -X POST http://127.0.0.1:8000/api/v1/search \
-  -H "Content-Type: application/json" \
-  -d '{"query":"パスワードリセット方法","top_k":3}'
-
-# 回答下書き生成（RAG + LLM）
-curl -X POST http://127.0.0.1:8000/api/v1/answers/draft \
-  -H "Content-Type: application/json" \
-  -d '{"question":"VPNに接続できません","top_k":3}'
-```
-
----
-
-## テスト・Lint・型チェック
-
-```bash
-make test        # pytest (unit / contract / integration)
-make lint        # ruff --fix
-make typecheck   # mypy
-```
-
-個別実行:
-
-```bash
-uv run pytest backend/tests/unit -v
-uv run pytest backend/tests/contract -v
-uv run pytest backend/tests/integration -v
-```
-
----
-
-## ディレクトリ構成
-
-```
-sample_asset/
-├── .env.example          # 環境変数テンプレート（デフォルト: Mock モード）
-├── .env.container.example # 任意のwatsonx.ai + IBM Cloud Milvus検証用
-├── .env                  # 実行時設定（gitignore）
-├── Dockerfile            # 非rootのアプリケーション image
-├── compose.yaml          # Docker / Podman共通の起動定義
-├── pyproject.toml        # プロジェクト設定・依存定義
-├── uv.lock               # 依存バージョン固定
-├── Makefile              # setup / seed / index / dev / test / lint / typecheck
-├── assets/
-│   └── source/           # Seed再生成用Excel（架空教材データ）
-│       ├── helpdesk_tickets.xlsx
-│       ├── helpdesk_documents.xlsx
-│       └── helpdesk_master.xlsx
-├── openapi/
-│   └── helpdesk-api.yaml # OpenAPI 3.1 仕様書
-├── frontend/             # ビルド不要の最小 UI（HTML + CSS + JS）
-│   ├── index.html
-│   ├── style.css
-│   └── app.js
-├── data/
-│   ├── seed/             # 元データ（tickets.json, tickets_student.json, documents.json, masters.json）
-│   ├── runtime/          # 実行時チケットデータ（gitignore）
-│   ├── index/            # ベクトルインデックス（gitignore）
-│   └── evaluation/       # 正解ラベル – 学生に配布しないこと
-│       └── ticket_gold.json
-└── backend/
-    ├── scripts/
-    │   ├── export_seed_data.py  # Excel → seed JSON（学生用と評価用を分離して出力）
-    │   └── build_index.py       # documents.json → ベクトルインデックス
-    ├── src/helpdesk/
-    │   ├── main.py        # FastAPI アプリケーション（Frontend 配信含む）
-    │   ├── config.py      # pydantic-settings（watsonx 使用時の必須チェック含む）
-    │   ├── domain/        # モデル・エラー定義（extra=forbid）
-    │   ├── ports/         # LLMPort / EmbeddingPort / VectorStorePort / TicketRepository
-    │   ├── adapters/      # JSON, Chroma/NumPy/Milvus, Mock/watsonx/OpenAI-compatible LLM・Embedding
-    │   ├── services/      # TicketService / RagService（draft_answer 含む）
-    │   └── api/           # FastAPI ルーター（health / tickets / masters / rag）
-    └── tests/
-        ├── conftest.py         # 共通フィクスチャ（Mock モード固定・一時ディレクトリ）
-        ├── test_api.py         # API smoke tests
-        ├── unit/               # モデル / config / ticket_json / vector_chroma / rag_service
-        ├── contract/           # OpenAPI 契約テスト
-        └── integration/        # /answers/draft エンドポイント E2E
-```
-
----
-
-
-## LLM プロバイダーの切り替え
-
-学生向け標準手順では`watsonx`を使用し、IBM Cloudを利用できない確認・テスト時だけ`mock`を使用します。`openai_compatible`はAdapter拡張例として残しますが、標準セットアップの選択肢には含めません。
-
-| `LLM_PROVIDER` | 必要な設定 |
+| API | 用途 |
 |---|---|
-| `mock` (デフォルト) | なし |
-| `watsonx` | `WATSONX_URL`, `WATSONX_PROJECT_ID`, `WATSONX_API_KEY`, `WATSONX_MODEL_ID` |
-| `openai_compatible` | `OPENAI_COMPATIBLE_BASE_URL`, `OPENAI_COMPATIBLE_MODEL_ID` |
+| `GET /api/v1/tickets` | チケット一覧 |
+| `POST /api/v1/search` | 関連文書のVector検索 |
+| `POST /api/v1/answers/draft` | 検索結果を使用した回答案生成 |
+| `GET /api/v1/health/ready` | 起動準備状態の確認 |
 
----
+画面の使い方は[GUI操作ガイド](./docs/GUI_USER_GUIDE.md)、詳細なAPIは起動後の`/docs`を参照してください。
 
-## エラーレスポンス形式（RFC 9457）
+## 6. 開発時の基本操作
+
+```bash
+make dev        # アプリケーション起動
+make index      # Chromaインデックス再構築
+make test       # テスト
+make lint       # Lintと自動修正
+make typecheck  # 型チェック
+```
+
+`make`が利用できないWindows環境では、対応するコマンドを直接実行してください。
+
+```powershell
+uv run uvicorn helpdesk.main:app --app-dir backend/src --reload --host 127.0.0.1 --port 8000
+uv run python backend/scripts/build_index.py
+uv run pytest backend/tests
+uv run ruff check backend/src backend/scripts backend/tests --fix
+uv run mypy backend/src --ignore-missing-imports
+```
+
+テスト・Lint・型チェック用の依存関係が未導入の場合は、先に次を実行します。
+
+```bash
+uv sync --extra dev
+```
+
+## 7. トラブルシューティング
+
+| 症状 | 対応 |
+|---|---|
+| `uv`が見つからない | Terminal／PowerShellを開き直す |
+| 8000番Portを使用できない | 既に起動しているアプリを停止する |
+| `/health/ready`が503 | `.env`を確認し、サーバー停止後に`build_index.py`を再実行する |
+| Chromaを開けない | 複数のFastAPI processを停止し、インデックスを再構築する |
+| watsonx.ai接続に失敗する | URL、Project ID、モデルIDを確認する。API Keyは画面やログへ出力しない |
+
+Mac／Windows別の補足は[環境構築手順](./docs/環境構築手順_Mac_Windows.md)を参照してください。
+
+## 8. （オプション）検索文書再構築手順
+
+RAGの検索対象は`data/seed/documents.json`です。検索文書を追加・変更した場合は、Chromaインデックスを再構築します。
+
+### JSONを直接編集する場合
+
+1. 起動中のサーバーを`Ctrl+C`で停止します。
+2. `data/seed/documents.json`を編集します。
+3. 次のコマンドでインデックスを再構築します。
+4. サーバーを起動し、変更した文書を検索できることを確認します。
+
+```bash
+uv run python backend/scripts/build_index.py
+uv run uvicorn helpdesk.main:app --app-dir backend/src --reload --host 127.0.0.1 --port 8000
+```
+
+文書は次の形式で追加します。`document_id`は重複させず、既存文書を更新するときは同じIDを維持してください。
 
 ```json
 {
-  "type": "https://helpdesk.example.com/problems/not-found",
-  "title": "Not Found",
-  "status": 404,
-  "detail": "Ticket with ID 'TKT-99999999' not found",
-  "request_id": "550e8400-e29b-41d4-a716-446655440000"
+  "document_id": "faq:vpn-01",
+  "title": "VPNに接続できない場合",
+  "body": "ネットワーク接続を確認し、VPNクライアントを再起動してください。",
+  "document_type": "faq",
+  "source": "internal-helpdesk",
+  "category": "技術的障害",
+  "updated_at": "2026-10-21",
+  "access_scope": "student",
+  "is_active": true
 }
 ```
 
-| HTTP | エラー種別 |
-|---|---|
-| 404 | `NotFoundError` |
-| 409 | `ConflictError`（version 衝突） |
-| 422 | バリデーション失敗（余分フィールドも 422） |
-| 503 | `ProviderError`、RAG インデックス未構築 |
+削除する文書は、履歴を残す場合は`is_active`を`false`にします。
+
+### Excelを正本として編集する場合
+
+`assets/source/helpdesk_documents.xlsx`を編集した後、次を実行します。
+
+```bash
+uv run python backend/scripts/export_seed_data.py
+uv run python backend/scripts/build_index.py
+```
+
+`export_seed_data.py`は検索文書だけでなく、`assets/source/`にあるTicketとMasterのExcelから対応するSeed JSONも再生成します。意図しない上書きを避けるため、実行前に差分をCommitするかバックアップしてください。GitでCloneした場合は、実行後に`git diff -- data/seed data/evaluation`で変更内容を確認します。
+
+## 9. （オプション）拡張構成
+
+- Docker／Podman: `Dockerfile`と`compose.yaml`
+- IBM Cloud Milvus: `.env.container.example`
+- ローカルEmbedding: `uv sync --extra local-embedding`
+- 構成・設計の詳細: [構成設計書](./docs/構成設計書.md)、[要件定義書](./docs/要件定義書.md)
+
+これらは初回セットアップには不要です。
