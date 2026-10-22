@@ -19,6 +19,9 @@ class ChunkRecord:
     position: int
     access_scope: str = "student"
     is_active: bool = True
+    # FAQ文書のみ。任意辞書は型が曖昧になるため個別fieldとして保持する
+    faq_id: str | None = None
+    completion_policy: str | None = None
 
 
 @dataclass(frozen=True)

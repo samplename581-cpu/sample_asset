@@ -3,23 +3,35 @@ import json
 import os
 import shutil
 import tempfile
+import threading
 from datetime import UTC, datetime
 from pathlib import Path
 
 from helpdesk.domain.errors import ConflictError, NotFoundError
-from helpdesk.domain.models import Ticket, TicketCreate, TicketPage, TicketUpdate
+from helpdesk.domain.models import (
+    Ticket,
+    TicketCreate,
+    TicketPage,
+    TicketUpdate,
+    build_ticket_title,
+)
 
 
 class JsonTicketRepository:
     """JSON-based repository implementing TicketRepository port with in-memory caching and atomic file writes."""
 
     def __init__(
-        self, seed_data_dir: str = "./data/seed", runtime_data_dir: str = "./data/runtime"
+        self,
+        seed_data_dir: str = "./data/seed",
+        runtime_data_dir: str = "./data/runtime",
+        seed_file_name: str = "tickets.json",
     ) -> None:
-        self.seed_file = Path(seed_data_dir) / "tickets.json"
+        self.seed_file = Path(seed_data_dir) / seed_file_name
         self.runtime_dir = Path(runtime_data_dir)
         self.runtime_file = self.runtime_dir / "tickets.json"
         self._tickets: dict[str, Ticket] = {}
+        # 受付番号の排他的な採番と JSON 書込みを直列化する
+        self._lock = threading.RLock()
         self._init_storage()
 
     def _init_storage(self) -> None:
@@ -117,41 +129,45 @@ class JsonTicketRepository:
         return f"TKT-{max_num + 1:08d}"
 
     def create_ticket(self, data: TicketCreate) -> Ticket:
-        ticket_id = self._generate_next_ticket_id()
-        now = datetime.now(UTC)
-        ticket = Ticket(
-            ticket_id=ticket_id,
-            title=data.title,
-            description=data.description,
-            created_at=now,
-            requester_department=data.requester_department,
-            category=None,
-            priority=None,
-            status="新規",
-            assigned_team=None,
-            resolution=None,
-            version=1,
-        )
-        self._tickets[ticket_id] = ticket
-        self._save_atomic()
-        return ticket
+        with self._lock:
+            ticket_id = self._generate_next_ticket_id()
+            ticket = Ticket.model_validate(
+                {
+                    "ticket_id": ticket_id,
+                    "title": build_ticket_title(data.product_name, data.description),
+                    "description": data.description,
+                    "created_at": datetime.now(UTC),
+                    "customer_name": data.customer_name,
+                    "customer_email": data.customer_email,
+                    "order_number": data.order_number,
+                    "product_name": data.product_name,
+                    "inquiry_type": data.inquiry_type,
+                    "status": "未対応",
+                    "has_attachment": data.has_attachment,
+                    "version": 1,
+                }
+            )
+            self._tickets[ticket_id] = ticket
+            self._save_atomic()
+            return ticket
 
     def update_ticket(self, ticket_id: str, data: TicketUpdate) -> Ticket:
-        current = self.get_ticket(ticket_id)
-        if current.version != data.version:
-            raise ConflictError(
-                f"Version conflict on ticket '{ticket_id}': expected {data.version}, but current version is {current.version}"
-            )
+        with self._lock:
+            current = self.get_ticket(ticket_id)
+            if current.version != data.version:
+                raise ConflictError(
+                    f"Version conflict on ticket '{ticket_id}': expected {data.version}, but current version is {current.version}"
+                )
 
-        update_dict = data.model_dump(exclude_unset=True)
-        # version in update_dict is the input version, which will be incremented
-        update_dict.pop("version", None)
+            update_dict = data.model_dump(exclude_unset=True)
+            # version in update_dict is the input version, which will be incremented
+            update_dict.pop("version", None)
 
-        current_data = current.model_dump()
-        current_data.update(update_dict)
-        current_data["version"] = current.version + 1
+            current_data = current.model_dump()
+            current_data.update(update_dict)
+            current_data["version"] = current.version + 1
 
-        updated = Ticket.model_validate(current_data)
-        self._tickets[ticket_id] = updated
-        self._save_atomic()
-        return updated
+            updated = Ticket.model_validate(current_data)
+            self._tickets[ticket_id] = updated
+            self._save_atomic()
+            return updated

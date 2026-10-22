@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>お問い合わせフォーム｜トヨスナ（サンプル）</title>
+<style>
+  :root{
+    --main:#1E3A5F; --main-2:#4A6FA5; --sage:#2F5F9E; --sage-tint:#EAF1FA;
+    --ink:#1F2A37; --muted:#5E6B7C; --line:#DCE3EC; --bg:#F4F6FA; --card:#FFFFFF;
+    --err:#B42318; --field:#FFFFFF;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --main:#BFD3EE; --main-2:#93AFD6; --sage:#8FB4E6; --sage-tint:#1C2A3D;
+      --ink:#E8EEF5; --muted:#A9B4C2; --line:#334155; --bg:#141A22; --card:#1E2733;
+      --err:#F08A7E; --field:#18202A;
+    }
+  }
+  :root[data-theme="dark"]{
+    --main:#BFD3EE; --main-2:#93AFD6; --sage:#8FB4E6; --sage-tint:#1C2A3D;
+    --ink:#E8EEF5; --muted:#A9B4C2; --line:#334155; --bg:#141A22; --card:#1E2733;
+    --err:#F08A7E; --field:#18202A;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;line-height:1.7}
+  header{background:var(--main);color:#fff}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) header{background:#1B2E4A} }
+  :root[data-theme="dark"] header{background:#1B2E4A}
+  .bar{max-width:760px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;gap:10px}
+  .logo{font-weight:700;font-size:18px;letter-spacing:.04em}
+  .logo small{font-weight:400;font-size:12px;opacity:.8;margin-left:8px}
+  main{max-width:760px;margin:0 auto;padding:28px 16px 60px}
+  h1{font-size:24px;margin:0 0 6px;color:var(--main)}
+  .lead{color:var(--muted);font-size:14px;margin:0 0 18px}
+  .sample{background:var(--sage-tint);color:var(--sage);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:20px}
+  form,.done{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px 22px}
+  .field{margin-bottom:20px}
+  label{display:block;font-weight:700;font-size:14px;margin-bottom:6px}
+  .req,.opt{font-size:11px;font-weight:700;border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:1px}
+  .req{background:var(--err);color:#fff}
+  .opt{background:var(--line);color:var(--muted)}
+  .hint{font-size:12px;color:var(--muted);margin-top:4px}
+  input[type=text],input[type=email],input[type=tel],select,textarea{
+    width:100%;font:inherit;font-size:15px;color:var(--ink);background:var(--field);
+    border:1.5px solid var(--line);border-radius:9px;padding:10px 12px}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--sage);box-shadow:0 0 0 3px rgba(47,95,158,.2)}
+  textarea{min-height:140px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:560px){.row{grid-template-columns:1fr}}
+  .types{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  @media (max-width:560px){.types{grid-template-columns:1fr 1fr}}
+  .types label{font-weight:400;font-size:13px;border:1.5px solid var(--line);border-radius:9px;padding:9px 10px;
+    cursor:pointer;margin:0;display:flex;align-items:center;gap:6px;background:var(--field)}
+  .types input{accent-color:var(--sage)}
+  .types label:has(input:checked){border-color:var(--sage);background:var(--sage-tint)}
+  .error{color:var(--err);font-size:12px;margin-top:4px;display:none}
+  .invalid .error{display:block}
+  .invalid input,.invalid select,.invalid textarea{border-color:var(--err)}
+  .invalid .types label{border-color:var(--err)}
+  button{font:inherit;font-weight:700;font-size:16px;border:none;border-radius:10px;padding:13px 28px;cursor:pointer}
+  .submit{background:var(--sage);color:#fff;width:100%}
+  .submit:hover{filter:brightness(.95)}
+  .done{display:none;text-align:center}
+  .done h2{color:var(--sage);margin:6px 0 4px;font-size:22px}
+  .no{display:inline-block;font-size:20px;font-weight:700;letter-spacing:.06em;border:2px dashed var(--sage);
+    border-radius:10px;padding:6px 18px;margin:12px 0;color:var(--ink)}
+  .summary{text-align:left;border-top:1px solid var(--line);margin-top:16px;padding-top:14px;font-size:14px}
+  .summary dt{color:var(--muted);font-size:12px;margin-top:8px}
+  .summary dd{margin:0;white-space:pre-wrap}
+  .again{background:transparent;color:var(--sage);border:1.5px solid var(--sage);margin-top:18px}
+</style>
+</head>
+<body>
+<header><div class="bar"><span class="logo">🪑 トヨスナ<small>オンラインストア</small></span></div></header>
+<main>
+  <h1>お問い合わせ</h1>
+  <p class="lead">配送・商品・組み立て・ご注文の変更などについて、お気軽にお問い合わせください。<br>担当者からメールでご返信いたします。</p>
+  <div class="sample">これは研修用のサンプル画面です（架空の会社）。送信しても、実際にはどこにも送られません。</div>
+
+  <form id="form" novalidate>
+    <div class="row">
+      <div class="field" data-req>
+        <label for="name">お名前<span class="req">必須</span></label>
+        <input type="text" id="name" placeholder="例）佐藤 美咲" autocomplete="name">
+        <div class="error">お名前を入力してください</div>
+      </div>
+      <div class="field" data-req data-type="email">
+        <label for="email">メールアドレス<span class="req">必須</span></label>
+        <input type="email" id="email" placeholder="例）misaki@example.com" autocomplete="email">
+        <div class="error">メールアドレスを正しく入力してください</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="order">注文番号<span class="opt">任意</span></label>
+        <input type="text" id="order" placeholder="例）MK-24581">
+        <div class="hint">ご注文確認メールに記載されています</div>
+      </div>
+      <div class="field">
+        <label for="product">商品名<span class="opt">任意</span></label>
+        <input type="text" id="product" placeholder="例）3人掛けソファ「モリ」">
+      </div>
+    </div>
+
+    <div class="field" data-req data-type="radio">
+      <label>お問い合わせの種類<span class="req">必須</span></label>
+      <div class="types">
+        <label><input type="radio" name="type" value="配送について">配送について</label>
+        <label><input type="radio" name="type" value="商品の傷・不具合">商品の傷・不具合</label>
+        <label><input type="radio" name="type" value="組み立て・使い方">組み立て・使い方</label>
+        <label><input type="radio" name="type" value="注文の変更・キャンセル">注文の変更・キャンセル</label>
+        <label><input type="radio" name="type" value="店舗・在庫">店舗・在庫</label>
+        <label><input type="radio" name="type" value="その他">その他</label>
+      </div>
+      <div class="error">お問い合わせの種類を選んでください</div>
+    </div>
+
+    <div class="field" data-req>
+      <label for="body">お問い合わせ内容<span class="req">必須</span></label>
+      <textarea id="body" placeholder="例）10月22日に配送予定のソファですが、都合が悪くなったため、10月25日に変更をお願いできますでしょうか。"></textarea>
+      <div class="error">お問い合わせ内容を入力してください</div>
+    </div>
+
+    <div class="field">
+      <label for="photo">写真の添付<span class="opt">任意</span></label>
+      <input type="file" id="photo" accept="image/*">
+      <div class="hint">商品の傷や不具合の場合は、写真があると対応がスムーズです</div>
+    </div>
+
+    <button type="submit" class="submit">送信する</button>
+  </form>
+
+  <section class="done" id="done" aria-live="polite">
+    <div style="font-size:40px">✉️</div>
+    <h2>お問い合わせを受け付けました</h2>
+    <p class="lead" style="margin:0">受付番号をお控えください。担当者より2営業日以内にご返信いたします。</p>
+    <div class="no" id="no"></div>
+    <dl class="summary" id="summary"></dl>
+    <button class="again" id="again" type="button">もう一件問い合わせる</button>
+  </section>
+</main>
+
+<script>
+  const form = document.getElementById('form');
+  const done = document.getElementById('done');
+  const $ = (id) => document.getElementById(id);
+  let seq = 21; // 管理シートのサンプルが20件あるため、21件目から採番
+
+  function check(field){
+    let ok = true;
+    if (field.dataset.type === 'radio') ok = !!field.querySelector('input:checked');
+    else {
+      const el = field.querySelector('input,textarea,select');
+      const v = el.value.trim();
+      ok = v.length > 0;
+      if (ok && field.dataset.type === 'email') ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    }
+    field.classList.toggle('invalid', !ok);
+    return ok;
+  }
+  form.querySelectorAll('[data-req]').forEach(f => f.addEventListener('input', () => { if (f.classList.contains('invalid')) check(f); }));
+  form.querySelectorAll('[data-req]').forEach(f => f.addEventListener('change', () => { if (f.classList.contains('invalid')) check(f); }));
+
+  const esc = (s) => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const fields = [...form.querySelectorAll('[data-req]')];
+    const results = fields.map(check);
+    if (results.includes(false)) { fields[results.indexOf(false)].scrollIntoView({behavior:'smooth', block:'center'}); return; }
+
+    const now = new Date();
+    const mmdd = String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0');
+    $('no').textContent = '受付番号 Q' + mmdd + '-' + String(seq++).padStart(2,'0');
+    const items = [
+      ['お名前', $('name').value], ['メールアドレス', $('email').value],
+      ['注文番号', $('order').value || '—'], ['商品名', $('product').value || '—'],
+      ['お問い合わせの種類', form.querySelector('input[name=type]:checked').value],
+      ['お問い合わせ内容', $('body').value],
+      ['写真', $('photo').files.length ? $('photo').files[0].name : 'なし'],
+    ];
+    $('summary').innerHTML = items.map(([k,v]) => '<dt>' + k + '</dt><dd>' + esc(v.trim()) + '</dd>').join('');
+    form.style.display = 'none'; done.style.display = 'block';
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+
+  $('again').addEventListener('click', () => {
+    form.reset(); form.querySelectorAll('.invalid').forEach(f => f.classList.remove('invalid'));
+    done.style.display = 'none'; form.style.display = 'block';
+  });
+</script>
+</body>
+</html>

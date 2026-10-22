@@ -10,7 +10,7 @@ from helpdesk.domain.models import (
     SearchResponse,
 )
 from helpdesk.ports.llm import ChatMessage, LLMPort
-from helpdesk.services.rag_service import RagService
+from helpdesk.services.rag_service import RagService, build_ticket_query
 from helpdesk.services.ticket_service import TicketService
 
 router = APIRouter(tags=["rag"])
@@ -80,7 +80,7 @@ async def create_draft_answer(
 ) -> DraftAnswerResponse:
     if request.ticket_id:
         ticket = ticket_service.get_ticket(request.ticket_id)
-        query = f"タイトル: {ticket.title}\n説明: {ticket.description}"
+        query = build_ticket_query(ticket)
     else:
         query = request.question or ""
 

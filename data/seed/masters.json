@@ -2,195 +2,130 @@
   "categories": [
     {
       "category_id": "CAT01",
-      "category_name": "技術的障害",
-      "description": "ネットワーク・システム・端末など、IT機器やインフラに起因する障害。業務の一時停止や遅延が発生している状態を含む。",
-      "example_keywords": "ネット, VPN, システムエラー, ログインできない, 動かない"
+      "category_name": "配送関連",
+      "description": "・配送日を変更したい\n・予定日を過ぎても届かない\n・配送状況を知りたい\n・時間帯を指定したい",
+      "example_keywords": "配送、届かない、日程、変更、遅れ、時間帯",
+      "support_team": "配送センター担当",
+      "note": "配送状況の確認・時間帯の指定など、FAQで答えられるものは窓口で回答する（FAQ-01〜05）"
     },
     {
       "category_id": "CAT02",
-      "category_name": "権限・アカウント",
-      "description": "アカウントの発行・変更・停止、パスワードリセット、共有フォルダ・システムへのアクセス権申請など。",
-      "example_keywords": "パスワード, アクセス権, アカウント, 権限, 追加, 削除"
+      "category_name": "商品不良・破損",
+      "description": "・届いた商品に傷がある\n・割れている、壊れている\n・ぐらつく、きしむ、引き出しが閉まらない",
+      "example_keywords": "傷、割れ、破損、壊れ、ぐらつく、きしむ、閉まらない",
+      "support_team": "修理・アフターサービス担当",
+      "note": "写真があれば管理シートの備考に「写真あり」と記入する"
     },
     {
       "category_id": "CAT03",
-      "category_name": "備品・環境",
-      "description": "PC・周辺機器の貸与・交換・故障対応、デスク周りの環境整備、消耗品の補充など総務が主担当となる内容。",
-      "example_keywords": "PC, モニター, キーボード, 備品, 届いた, 壊れた"
+      "category_name": "組み立て・使い方",
+      "description": "・組み立て方が分からない\n・説明書をなくした\n・お手入れ方法を知りたい",
+      "example_keywords": "組み立て、説明書、部品、お手入れ、洗える",
+      "support_team": "窓口担当",
+      "note": "部品が足りない・合わない場合は「修理・アフターサービス担当」へ引き継ぐ"
     },
     {
       "category_id": "CAT04",
-      "category_name": "問い合わせ・相談",
-      "description": "業務手順や社内ルール、システム操作方法に関する質問・相談。緊急度は基本的に低い。",
-      "example_keywords": "方法を教えて, 手順, 確認したい, 相談, どうすれば"
+      "category_name": "注文変更・キャンセル",
+      "description": "・色やサイズを変えたい\n・注文をキャンセルしたい\n・届け先を変えたい",
+      "example_keywords": "変更、キャンセル、取り消し、色違い、サイズ",
+      "support_team": "窓口担当",
+      "note": "出荷後の変更・キャンセルは「配送センター担当」へ引き継ぐ"
     },
     {
       "category_id": "CAT05",
-      "category_name": "その他",
-      "description": "上記4カテゴリに該当しない内容。対応要否を確認のうえ、適切な部署へルーティングする。",
-      "example_keywords": "その他, 不明, 判断できない"
+      "category_name": "店舗・在庫・その他",
+      "description": "・店舗の営業時間や場所\n・在庫の有無、取り置き\n・上記に当てはまらないもの",
+      "example_keywords": "店舗、営業時間、在庫、取り置き",
+      "support_team": "窓口担当",
+      "note": "判断に迷う場合は、まずこのカテゴリで受け付けて備考に理由を書く"
     }
   ],
   "priorities": [
     {
       "priority_id": "P01",
-      "priority_name": "緊急",
-      "definition": "業務停止・複数ユーザーへの影響・セキュリティリスク・役員/重要イベントへの影響のいずれかを満たす。即時対応が必要。",
-      "target_response_time": "30分以内",
-      "escalation_required": "必須",
-      "example": "全社VPN障害、ランサムウェア感染疑い、経営会議直前のシステム停止"
+      "priority_name": "高",
+      "description": "お客様の生活に支障がある、または期限が迫っている",
+      "examples": "・配送予定日まで2日以内の日程変更\n・予定日を過ぎても届かない\n・破損していて使えない\n・ケガをするおそれがある",
+      "response_target": "当日中"
     },
     {
       "priority_id": "P02",
-      "priority_name": "通常",
-      "definition": "業務に支障があるが代替手段がある、または影響範囲が限定的。当日中または翌営業日中に対応。",
-      "target_response_time": "4時間以内（当日）",
-      "escalation_required": "状況による",
-      "example": "自分のPCがフリーズ、アクセス権の追加申請、ソフトのインストール依頼"
+      "priority_name": "中",
+      "description": "対応は必要だが、すぐには困らない",
+      "examples": "・小さな傷はあるが使える\n・ぐらつき、きしみ、部品不足\n・出荷前の注文変更・キャンセル",
+      "response_target": "1営業日以内"
     },
     {
       "priority_id": "P03",
       "priority_name": "低",
-      "definition": "現時点で業務への直接的影響はない。計画的に対応可能。",
-      "target_response_time": "3営業日以内",
-      "escalation_required": "不要",
-      "example": "キーボードの文字が薄い、画面の輝度調整方法の問い合わせ"
+      "description": "一般的な質問や確認",
+      "examples": "・配送状況、時間帯の確認\n・組み立て方、お手入れ方法\n・営業時間、在庫の問い合わせ",
+      "response_target": "2営業日以内"
     }
   ],
   "support-teams": [
     {
       "team_id": "T01",
-      "team_name": "IT Support",
-      "primary_scope": "ネットワーク障害・VPN・端末トラブル・共有フォルダ・社内システム全般",
-      "contact": "itsupport@example.com / 内線: 1001",
-      "notes": ""
+      "team_name": "配送センター担当"
     },
     {
       "team_id": "T02",
-      "team_name": "Account Management",
-      "primary_scope": "アカウント発行・停止・パスワードリセット・権限管理",
-      "contact": "account@example.com / 内線: 1002",
-      "notes": ""
+      "team_name": "修理・アフターサービス担当"
     },
     {
       "team_id": "T03",
-      "team_name": "General Affairs",
-      "primary_scope": "PC貸与・返却・備品・消耗品・座席・環境整備",
-      "contact": "soumu@example.com / 内線: 1003",
-      "notes": ""
-    },
-    {
-      "team_id": "T04",
-      "team_name": "Security",
-      "primary_scope": "セキュリティインシデント・不審メール・ウイルス・情報漏洩対応",
-      "contact": "security@example.com / 内線: 1004",
-      "notes": "エスカレーション時は即時連絡"
-    },
-    {
-      "team_id": "T05",
-      "team_name": "Application Support",
-      "primary_scope": "社内業務アプリ・SaaS・ライセンス管理・ソフトウェアインストール",
-      "contact": "appsupport@example.com / 内線: 1005",
-      "notes": ""
-    },
-    {
-      "team_id": "T06",
-      "team_name": "Department Lead",
-      "primary_scope": "対応部署の判断が困難な場合・複数部署にまたがる場合の調整",
-      "contact": "lead@example.com / 内線: 1006",
-      "notes": "最終判断者"
+      "team_name": "窓口担当"
     }
   ],
-  "services": [
+  "statuses": [
     {
-      "service_id": "SVC01",
-      "service_name": "VPN接続",
-      "description": "社外からの社内ネットワーク接続",
-      "primary_team": "IT Support",
-      "secondary_team": "Security",
-      "typical_priority": "通常",
-      "notes": "障害時は緊急に昇格"
+      "status_id": "ST01",
+      "status_name": "未対応"
     },
     {
-      "service_id": "SVC02",
-      "service_name": "PC貸与・返却",
-      "description": "端末の新規貸与・交換・返却手続き",
-      "primary_team": "General Affairs",
-      "secondary_team": "IT Support",
-      "typical_priority": "通常",
-      "notes": ""
+      "status_id": "ST02",
+      "status_name": "対応中"
     },
     {
-      "service_id": "SVC03",
-      "service_name": "アカウント管理",
-      "description": "新規発行・停止・パスワードリセット",
-      "primary_team": "Account Management",
-      "secondary_team": "IT Support",
-      "typical_priority": "通常",
-      "notes": "退職者は即日停止"
+      "status_id": "ST03",
+      "status_name": "完了"
+    }
+  ],
+  "handling-types": [
+    {
+      "handling_type_id": "H01",
+      "handling_type_name": "FAQで回答"
     },
     {
-      "service_id": "SVC04",
-      "service_name": "共有フォルダ",
-      "description": "アクセス権付与・フォルダ作成",
-      "primary_team": "IT Support",
-      "secondary_team": "Application Support",
-      "typical_priority": "通常",
-      "notes": ""
+      "handling_type_id": "H02",
+      "handling_type_name": "専門部署へ引き継ぎ"
+    }
+  ],
+  "inquiry-types": [
+    {
+      "inquiry_type_id": "IT01",
+      "inquiry_type_name": "配送について"
     },
     {
-      "service_id": "SVC05",
-      "service_name": "セキュリティ対応",
-      "description": "インシデント・不審メール・ウイルス",
-      "primary_team": "Security",
-      "secondary_team": "IT Support",
-      "typical_priority": "緊急",
-      "notes": "即時エスカレーション"
+      "inquiry_type_id": "IT02",
+      "inquiry_type_name": "商品の傷・不具合"
     },
     {
-      "service_id": "SVC06",
-      "service_name": "ソフトウェアインストール",
-      "description": "業務アプリ・ライセンス申請・導入",
-      "primary_team": "Application Support",
-      "secondary_team": "IT Support",
-      "typical_priority": "通常",
-      "notes": "承認フロー必要"
+      "inquiry_type_id": "IT03",
+      "inquiry_type_name": "組み立て・使い方"
     },
     {
-      "service_id": "SVC07",
-      "service_name": "メール設定",
-      "description": "新規メールアドレス・転送・署名",
-      "primary_team": "Account Management",
-      "secondary_team": "IT Support",
-      "typical_priority": "通常",
-      "notes": ""
+      "inquiry_type_id": "IT04",
+      "inquiry_type_name": "注文の変更・キャンセル"
     },
     {
-      "service_id": "SVC08",
-      "service_name": "プリンター・複合機",
-      "description": "印刷トラブル・ドライバ設定",
-      "primary_team": "IT Support",
-      "secondary_team": "General Affairs",
-      "typical_priority": "低",
-      "notes": ""
+      "inquiry_type_id": "IT05",
+      "inquiry_type_name": "店舗・在庫"
     },
     {
-      "service_id": "SVC09",
-      "service_name": "備品・消耗品",
-      "description": "マウス・キーボード等の交換申請",
-      "primary_team": "General Affairs",
-      "secondary_team": "",
-      "typical_priority": "低",
-      "notes": ""
-    },
-    {
-      "service_id": "SVC10",
-      "service_name": "社内システム全般",
-      "description": "業務システムのエラー・動作不良",
-      "primary_team": "Application Support",
-      "secondary_team": "IT Support",
-      "typical_priority": "通常",
-      "notes": "再現手順の添付を推奨"
+      "inquiry_type_id": "IT06",
+      "inquiry_type_name": "その他"
     }
   ]
 }

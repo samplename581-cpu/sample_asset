@@ -29,16 +29,16 @@ def client_with_rag(tmp_path_factory: pytest.TempPathFactory) -> TestClient:
             "title": "VPN接続障害",
             "description": "VPNに接続できない",
             "created_at": "2025-01-01T00:00:00+00:00",
-            "requester_department": "営業部",
-            "category": "技術的障害",
-            "priority": "通常",
-            "status": "新規",
+            "customer_name": "テスト 太郎",
+            "category": "配送関連",
+            "priority": "中",
+            "status": "未対応",
             "assigned_team": None,
             "resolution": None,
             "version": 1,
         }
     ]
-    (seed_dir / "tickets.json").write_text(
+    (seed_dir / "tickets_student.json").write_text(
         json.dumps(tickets, ensure_ascii=False), encoding="utf-8"
     )
 

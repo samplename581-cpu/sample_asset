@@ -40,93 +40,29 @@ logger = logging.getLogger("build_index")
 # Chunking helpers
 # ---------------------------------------------------------------------------
 
-_SINGLE_CHUNK_TYPES = {"faq", "troubleshooting_guide"}
-_MULTI_CHUNK_TYPES = {"routing_rule", "escalation_rule", "triage_rule"}
-
-
 def _chunk_document(doc: dict[str, Any]) -> list[ChunkRecord]:
-    """Convert a document dict into one or more ChunkRecord objects."""
+    """Convert a document dict into ChunkRecord objects.
+
+    FAQ・分類基準は1文書=1チャンクにする（質問と回答、基準と例を分割しない）。
+    """
     doc_id: str = doc["document_id"]
     title: str = doc["title"]
     body: str = doc["body"]
     doc_type: str = doc["document_type"]
-    source: str = doc["source"]
-    category: str | None = doc.get("category")
-    access_scope = str(doc.get("access_scope", "student"))
-    is_active = bool(doc.get("is_active", True))
-
-    if doc_type in _SINGLE_CHUNK_TYPES:
-        text = f"{title}\n{body}"
-        chunk_id = f"{doc_id}:0001"
-        return [
-            ChunkRecord(
-                chunk_id=chunk_id,
-                document_id=doc_id,
-                text=text,
-                title=title,
-                source=source,
-                document_type=doc_type,
-                category=category,
-                position=0,
-                access_scope=access_scope,
-                is_active=is_active,
-            )
-        ]
-
-    if doc_type in _MULTI_CHUNK_TYPES:
-        # Each line of body becomes a separate chunk
-        lines = [line.strip() for line in body.splitlines() if line.strip()]
-        chunks: list[ChunkRecord] = []
-        for pos, line in enumerate(lines):
-            chunk_id = f"{doc_id}:{pos + 1:04d}"
-            chunks.append(
-                ChunkRecord(
-                    chunk_id=chunk_id,
-                    document_id=doc_id,
-                    text=f"{title}\n{line}",
-                    title=title,
-                    source=source,
-                    document_type=doc_type,
-                    category=category,
-                    position=pos,
-                    access_scope=access_scope,
-                    is_active=is_active,
-                )
-            )
-        # If body had no newlines, keep the whole body as one chunk
-        if not chunks:
-            chunk_id = f"{doc_id}:0001"
-            chunks.append(
-                ChunkRecord(
-                    chunk_id=chunk_id,
-                    document_id=doc_id,
-                    text=f"{title}\n{body}",
-                    title=title,
-                    source=source,
-                    document_type=doc_type,
-                    category=category,
-                    position=0,
-                    access_scope=access_scope,
-                    is_active=is_active,
-                )
-            )
-        return chunks
-
-    # Fallback: single chunk
-    text = f"{title}\n{body}"
-    chunk_id = f"{doc_id}:0001"
     return [
         ChunkRecord(
-            chunk_id=chunk_id,
+            chunk_id=f"{doc_id}:0001",
             document_id=doc_id,
-            text=text,
+            text=f"{title}\n{body}",
             title=title,
-            source=source,
+            source=doc["source"],
             document_type=doc_type,
-            category=category,
+            category=doc.get("category"),
             position=0,
-            access_scope=access_scope,
-            is_active=is_active,
+            access_scope=str(doc.get("access_scope", "student")),
+            is_active=bool(doc.get("is_active", True)),
+            faq_id=doc.get("faq_id"),
+            completion_policy=doc.get("completion_policy"),
         )
     ]
 
@@ -223,6 +159,8 @@ def main() -> None:
                 "position": c.position,
                 "access_scope": c.access_scope,
                 "is_active": c.is_active,
+                "faq_id": c.faq_id,
+                "completion_policy": c.completion_policy,
             }
             for c in all_chunks
         ]
@@ -281,6 +219,12 @@ def main() -> None:
                     "is_active": c.is_active,
                     "position": c.position,
                     **({"category": c.category} if c.category is not None else {}),
+                    **({"faq_id": c.faq_id} if c.faq_id is not None else {}),
+                    **(
+                        {"completion_policy": c.completion_policy}
+                        if c.completion_policy is not None
+                        else {}
+                    ),
                 }
                 for c in all_chunks
             ],

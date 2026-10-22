@@ -4,22 +4,46 @@ import re
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 TICKET_ID_PATTERN = re.compile(r"^[A-Z0-9][A-Z0-9_-]{2,39}$")
+
+_EMAIL_PATTERN = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
+_ORDER_NUMBER_PATTERN = r"^[A-Z0-9-]{1,40}$"
+_FAQ_ID_PATTERN = r"^FAQ-[0-9]{2,4}$"
+
+
+def build_ticket_title(product_name: str | None, description: str) -> str:
+    """商品名と問い合わせ内容の先頭部分から互換用 title を生成する。"""
+    head = " ".join(description.split())[:40]
+    title = f"{product_name}: {head}" if product_name else head
+    return title[:200]
 
 
 class Ticket(BaseModel):
     ticket_id: str = Field(max_length=40)
     title: str = Field(min_length=1, max_length=200)
-    description: str = Field(min_length=1, max_length=10000)
+    description: str = Field(min_length=1, max_length=4000)
     created_at: datetime
-    requester_department: str = Field(max_length=100)
+    # Deprecated: 業務ツール取込後の新規データでは使用しない（将来削除候補）
+    requester_department: str | None = Field(
+        None, max_length=100, description="Deprecated. 新規データでは使用しない"
+    )
+    # Sensitive: Embedding / Chroma / LLM Prompt / Log へ渡さない
+    customer_name: str = Field(min_length=1, max_length=100)
+    customer_email: str | None = Field(None, max_length=254, pattern=_EMAIL_PATTERN)
+    order_number: str | None = Field(None, pattern=_ORDER_NUMBER_PATTERN)
+    product_name: str | None = Field(None, max_length=200)
+    inquiry_type: str | None = Field(None, max_length=40)
     category: str | None = Field(None, max_length=40)
     priority: str | None = Field(None, max_length=40)
+    handling_type: str | None = Field(None, max_length=40)
     status: str = Field(max_length=40)
     assigned_team: str | None = Field(None, max_length=80)
+    faq_id: str | None = Field(None, pattern=_FAQ_ID_PATTERN)
+    notes: str | None = Field(None, max_length=4000)
     resolution: str | None = Field(None, max_length=10000)
+    has_attachment: bool = False
     version: int = Field(ge=1, default=1)
 
     @field_validator("ticket_id")
@@ -31,11 +55,17 @@ class Ticket(BaseModel):
 
 
 class TicketCreate(BaseModel):
-    model_config = {"extra": "forbid"}
+    """問い合わせフォーム項目。受付番号・作成日時・ステータス・versionは Backend が生成する。"""
 
-    title: str = Field(min_length=1, max_length=200)
-    description: str = Field(min_length=1, max_length=10000)
-    requester_department: str = Field(min_length=1, max_length=100)
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    customer_name: str = Field(min_length=1, max_length=100)
+    customer_email: str = Field(max_length=254, pattern=_EMAIL_PATTERN)
+    order_number: str | None = Field(None, pattern=_ORDER_NUMBER_PATTERN)
+    product_name: str | None = Field(None, max_length=200)
+    inquiry_type: str = Field(min_length=1, max_length=40)
+    description: str = Field(min_length=1, max_length=4000)
+    has_attachment: bool = False
 
 
 class TicketUpdate(BaseModel):
@@ -44,8 +74,10 @@ class TicketUpdate(BaseModel):
     version: int = Field(ge=1)
     category: str | None = Field(None, max_length=40)
     priority: str | None = Field(None, max_length=40)
+    handling_type: str | None = Field(None, max_length=40)
     status: str | None = Field(None, max_length=40)
     assigned_team: str | None = Field(None, max_length=80)
+    faq_id: str | None = Field(None, pattern=_FAQ_ID_PATTERN)
     resolution: str | None = Field(None, max_length=10000)
 
     @model_validator(mode="after")
@@ -113,9 +145,20 @@ class DraftAnswerResponseMeta(BaseModel):
     request_id: str
 
 
+class ClassificationSuggestion(BaseModel):
+    """LLMによる分類提案。確定値ではなく、必ず担当者が確認する。"""
+
+    category: str | None = Field(None, max_length=40)
+    priority: str | None = Field(None, max_length=40)
+    handling_type: str | None = Field(None, max_length=40)
+    assigned_team: str | None = Field(None, max_length=80)
+    faq_id: str | None = Field(None, pattern=_FAQ_ID_PATTERN)
+
+
 class DraftAnswerResponse(BaseModel):
     draft_answer: str
     citations: list[Citation]
+    classification_suggestion: ClassificationSuggestion | None = None
     needs_human_confirmation: bool = True
     missing_information: list[str]
     metadata: DraftAnswerResponseMeta

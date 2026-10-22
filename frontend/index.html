@@ -9,7 +9,10 @@
 <body>
   <header class="topbar">
     <span class="app-title">Helpdesk Support</span>
-    <span id="providerBadge" class="badge badge-mock">Provider: loading…</span>
+    <span>
+      <button id="btnNewInquiry" class="btn-secondary">＋ 新規問い合わせ</button>
+      <span id="providerBadge" class="badge badge-mock">Provider: loading…</span>
+    </span>
   </header>
 
   <div class="layout">
@@ -33,13 +36,61 @@
         <p>左の一覧からチケットを選択してください</p>
       </div>
 
+      <!-- 問い合わせフォーム -->
+      <section id="inquiryForm" class="hidden">
+        <h2>お問い合わせ</h2>
+        <p class="meta-text">受付番号は送信後にシステムが発行します。氏名・メールアドレス・注文番号は検索・回答案生成には使用されません。</p>
+        <form id="formInquiry" novalidate>
+          <div class="field" data-req>
+            <label for="fName">お名前<span class="req">必須</span></label>
+            <input type="text" id="fName" maxlength="100" autocomplete="name" placeholder="例）佐藤 美咲" />
+            <div class="field-error">お名前を入力してください</div>
+          </div>
+          <div class="field" data-req data-type="email">
+            <label for="fEmail">メールアドレス<span class="req">必須</span></label>
+            <input type="email" id="fEmail" maxlength="254" autocomplete="email" placeholder="例）misaki@example.com" />
+            <div class="field-error">メールアドレスを正しく入力してください</div>
+          </div>
+          <div class="field" data-type="order">
+            <label for="fOrder">注文番号<span class="opt">任意</span></label>
+            <input type="text" id="fOrder" maxlength="40" placeholder="例）MK-24581" />
+            <div class="hint">ご注文確認メールに記載されています（英大文字・数字・ハイフン）</div>
+            <div class="field-error">注文番号は英大文字・数字・ハイフンで入力してください</div>
+          </div>
+          <div class="field">
+            <label for="fProduct">商品名<span class="opt">任意</span></label>
+            <input type="text" id="fProduct" maxlength="200" placeholder="例）3人掛けソファ「モリ」" />
+          </div>
+          <div class="field" data-req data-type="radio">
+            <label>お問い合わせの種類<span class="req">必須</span></label>
+            <div id="inquiryTypes" class="types"></div>
+            <div class="field-error">お問い合わせの種類を選んでください</div>
+          </div>
+          <div class="field" data-req>
+            <label for="fBody">お問い合わせ内容<span class="req">必須</span></label>
+            <textarea id="fBody" rows="6" maxlength="4000" placeholder="例）10月22日に配送予定のソファですが、10月25日に変更をお願いできますでしょうか。"></textarea>
+            <div class="field-error">お問い合わせ内容を入力してください</div>
+          </div>
+          <div class="field">
+            <label for="fPhoto">写真の添付<span class="opt">任意</span></label>
+            <input type="file" id="fPhoto" accept="image/jpeg,image/png,image/webp" />
+            <div class="hint">本体は保存・送信されません。添付ありの有無だけを記録します。</div>
+          </div>
+          <button type="submit" id="btnSubmitInquiry" class="btn-primary">送信する</button>
+        </form>
+        <div id="inquiryDone" class="hidden done-box" aria-live="polite">
+          <h3>お問い合わせを受け付けました</h3>
+          <p>受付番号: <strong id="doneTicketId"></strong></p>
+        </div>
+      </section>
+
       <div id="ticketDetail" class="hidden">
         <section class="detail-header">
           <span id="detailId" class="ticket-id"></span>
           <span id="detailStatus" class="status-badge"></span>
         </section>
         <h2 id="detailTitle"></h2>
-        <p id="detailDept" class="meta-text"></p>
+        <p id="detailMeta" class="meta-text"></p>
         <p id="detailDesc" class="description"></p>
 
         <div class="action-row">

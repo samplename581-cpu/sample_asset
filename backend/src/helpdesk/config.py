@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -52,12 +53,21 @@ class Settings(BaseSettings):
     MILVUS_TLS: bool = True
 
     SEED_DATA_DIR: str = "./data/seed"
+    # 通常起動では正解fieldを除外したStudent用Ticketを使用する（評価Dataは配信しない）
+    TICKET_SEED_FILE: str = "tickets_student.json"
     RUNTIME_DATA_DIR: str = "./data/runtime"
     INDEX_DIR: str = "./data/index"
 
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+
+    @model_validator(mode="after")
+    def validate_ticket_seed_file(self) -> Settings:
+        """TICKET_SEED_FILE は SEED_DATA_DIR 直下のファイル名だけを許可する。"""
+        if Path(self.TICKET_SEED_FILE).name != self.TICKET_SEED_FILE:
+            raise ValueError("TICKET_SEED_FILE must be a file name without directories")
+        return self
 
     @model_validator(mode="after")
     def validate_cors_wildcard(self) -> Settings:

@@ -1,4 +1,4 @@
-.PHONY: setup seed index dev test lint typecheck open container-config container-up container-down
+.PHONY: setup validate-seed seed index dev test lint typecheck open container-config container-up container-down
 
 COMPOSE ?= docker compose
 
@@ -6,8 +6,11 @@ setup:
 	cp -n .env.example .env || true
 	uv sync --extra dev
 
+validate-seed:
+	uv run python backend/scripts/import_business_tools.py validate
+
 seed:
-	uv run python backend/scripts/export_seed_data.py
+	uv run python backend/scripts/import_business_tools.py export
 
 index:
 	uv run python backend/scripts/build_index.py

@@ -25,10 +25,10 @@ def tmp_repo(tmp_path: Path) -> JsonTicketRepository:
             "title": "VPN接続障害",
             "description": "VPNに接続できない",
             "created_at": "2025-01-01T00:00:00+00:00",
-            "requester_department": "営業部",
-            "category": "技術的障害",
-            "priority": "通常",
-            "status": "新規",
+            "customer_name": "顧客A",
+            "category": "配送関連",
+            "priority": "中",
+            "status": "未対応",
             "assigned_team": None,
             "resolution": None,
             "version": 1,
@@ -38,11 +38,11 @@ def tmp_repo(tmp_path: Path) -> JsonTicketRepository:
             "title": "パスワードリセット",
             "description": "パスワードを忘れた",
             "created_at": "2025-01-02T00:00:00+00:00",
-            "requester_department": "開発部",
-            "category": "権限・アカウント",
-            "priority": "通常",
+            "customer_name": "顧客B",
+            "category": "組み立て・使い方",
+            "priority": "低",
             "status": "完了",
-            "assigned_team": "IT Support",
+            "assigned_team": "窓口担当",
             "resolution": "リセット済み",
             "version": 1,
         },
@@ -75,7 +75,7 @@ def test_list_cursor_pagination_no_overlap_no_gap(tmp_path: Path) -> None:
             "title": f"Ticket {i}",
             "description": "desc",
             "created_at": f"2025-01-0{i}T00:00:00+00:00",
-            "requester_department": "部門",
+            "customer_name": "顧客",
             "category": None,
             "priority": None,
             "status": "新規",
@@ -109,8 +109,9 @@ def test_list_cursor_pagination_no_overlap_no_gap(tmp_path: Path) -> None:
 
 def test_list_status_filter(tmp_repo: JsonTicketRepository) -> None:
     """status フィルタが機能すること。"""
-    page_new = tmp_repo.list_tickets(status="新規")
-    assert all(t.status == "新規" for t in page_new.items)
+    page_new = tmp_repo.list_tickets(status="未対応")
+    assert len(page_new.items) == 1
+    assert all(t.status == "未対応" for t in page_new.items)
 
     page_done = tmp_repo.list_tickets(status="完了")
     assert all(t.status == "完了" for t in page_done.items)
@@ -119,12 +120,59 @@ def test_list_status_filter(tmp_repo: JsonTicketRepository) -> None:
 def test_create_ticket_id_prefix(tmp_repo: JsonTicketRepository) -> None:
     """`create_ticket` で `ticket_id` が `TKT-` プレフィックスであること。"""
     new_ticket = TicketCreate(
-        title="新しいチケット",
+        customer_name="新規 顧客",
+        customer_email="new@example.com",
+        inquiry_type="配送について",
         description="説明文です",
-        requester_department="開発部",
     )
     created = tmp_repo.create_ticket(new_ticket)
     assert created.ticket_id.startswith("TKT-")
+    assert created.status == "未対応"
+    assert created.created_at.tzinfo is not None
+
+
+def test_create_ticket_ids_are_sequential_and_unique(tmp_repo: JsonTicketRepository) -> None:
+    """受付番号はBackendが排他的に採番し、重複しないこと。"""
+    ids = [
+        tmp_repo.create_ticket(
+            TicketCreate(
+                customer_name=f"顧客{i}",
+                customer_email="a@example.com",
+                inquiry_type="その他",
+                description="問い合わせ",
+            )
+        ).ticket_id
+        for i in range(5)
+    ]
+    assert len(set(ids)) == 5
+    assert ids == sorted(ids)
+
+
+def test_seed_file_name_is_configurable(tmp_path: Path) -> None:
+    """seed_file_name で Student用Ticketを選択できること。"""
+    seed_dir = tmp_path / "seed"
+    seed_dir.mkdir()
+    base = {
+        "title": "t",
+        "description": "d",
+        "created_at": "2025-01-01T00:00:00+00:00",
+        "customer_name": "顧客",
+        "status": "未対応",
+    }
+    (seed_dir / "tickets.json").write_text(
+        json.dumps([{**base, "ticket_id": "TKT-GOLD01", "category": "配送関連"}]), encoding="utf-8"
+    )
+    (seed_dir / "tickets_student.json").write_text(
+        json.dumps([{**base, "ticket_id": "TKT-STUDENT1"}]), encoding="utf-8"
+    )
+    repo = JsonTicketRepository(
+        seed_data_dir=str(seed_dir),
+        runtime_data_dir=str(tmp_path / "runtime"),
+        seed_file_name="tickets_student.json",
+    )
+    page = repo.list_tickets()
+    assert [t.ticket_id for t in page.items] == ["TKT-STUDENT1"]
+    assert page.items[0].category is None
 
 
 def test_update_ticket_version_conflict(tmp_repo: JsonTicketRepository) -> None:

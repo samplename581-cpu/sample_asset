@@ -95,3 +95,22 @@ textarea { width: 100%; border: 1px solid #d1d5db; border-radius: 6px;
   .layout { grid-template-columns: 1fr; }
   .pane-left { height: 45vh; }
 }
+
+/* ---- inquiry form ---- */
+.field { margin-bottom: 14px; max-width: 560px; }
+.field label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+.field input[type=text], .field input[type=email] { width: 100%; border: 1px solid #d1d5db;
+  border-radius: 6px; padding: 6px 10px; font-size: 13px; }
+.req, .opt { font-size: 11px; border-radius: 4px; padding: 1px 6px; margin-left: 6px; }
+.req { background: #b42318; color: #fff; }
+.opt { background: #e5e7eb; color: #6b7280; }
+.hint { font-size: 12px; color: #6b7280; margin-top: 3px; }
+.field-error { display: none; color: #b42318; font-size: 12px; margin-top: 3px; }
+.field.invalid .field-error { display: block; }
+.field.invalid input, .field.invalid textarea { border-color: #b42318; }
+.types { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.types label { font-weight: 400; border: 1px solid #d1d5db; border-radius: 6px; padding: 6px 8px;
+  margin: 0; display: flex; align-items: center; gap: 6px; background: #fff; cursor: pointer; }
+.done-box { background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 6px; padding: 12px 16px; margin-top: 14px; }
+.suggestion-box { background: #f5f3ff; border: 1px solid #c4b5fd; border-radius: 6px;
+  padding: 8px 12px; font-size: 12px; margin-bottom: 10px; }

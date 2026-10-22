@@ -49,9 +49,10 @@ def test_patch_ticket_extra_field_returns_422(client: TestClient) -> None:
     create_res = client.post(
         "/api/v1/tickets",
         json={
-            "title": "コントラクトテスト用チケット",
+            "customer_name": "テスト 太郎",
+            "customer_email": "taro@example.com",
+            "inquiry_type": "配送について",
             "description": "余分フィールドテスト用",
-            "requester_department": "テスト部",
         },
     )
     assert create_res.status_code == 201
@@ -82,3 +83,44 @@ def test_list_tickets_unknown_status_returns_empty_or_422(client: TestClient) ->
         assert "items" in data
         # 存在しないステータスなので空であること
         assert data["items"] == []
+
+
+# ── 業務ツール取込で追加した契約 ────────────────────────────────────────────────
+
+
+def _spec() -> dict[str, object]:
+    with OPENAPI_YAML_PATH.open(encoding="utf-8") as f:
+        return yaml.safe_load(f)  # type: ignore[no-any-return]
+
+
+def test_openapi_ticket_fields_match_model() -> None:
+    """OpenAPIのTicket／TicketCreate／TicketUpdateがPydanticモデルと同じfield集合であること。"""
+    from helpdesk.domain.models import Ticket, TicketCreate, TicketUpdate
+
+    schemas = _spec()["components"]["schemas"]  # type: ignore[index]
+    for name, model in (("Ticket", Ticket), ("TicketCreate", TicketCreate), ("TicketUpdate", TicketUpdate)):
+        assert set(schemas[name]["properties"]) == set(model.model_fields), name
+
+
+def test_openapi_ticket_create_required_fields() -> None:
+    schemas = _spec()["components"]["schemas"]  # type: ignore[index]
+    assert set(schemas["TicketCreate"]["required"]) == {
+        "customer_name", "customer_email", "inquiry_type", "description",
+    }  # fmt: skip
+    assert schemas["TicketCreate"]["additionalProperties"] is False
+    assert schemas["TicketCreate"]["properties"]["description"]["maxLength"] == 4000
+
+
+def test_openapi_master_names_match_router() -> None:
+    from helpdesk.api.masters import MasterName
+
+    paths = _spec()["paths"]  # type: ignore[index]
+    enum = paths["/masters/{master_name}"]["get"]["parameters"][0]["schema"]["enum"]
+    assert set(enum) == {m.value for m in MasterName}
+
+
+def test_draft_response_schema_has_no_personal_fields() -> None:
+    schemas = _spec()["components"]["schemas"]  # type: ignore[index]
+    text = str(schemas["DraftAnswerResponse"]) + str(schemas["Citation"]) + str(schemas["SearchItem"])
+    for forbidden in ("customer_name", "customer_email", "order_number"):
+        assert forbidden not in text

@@ -27,26 +27,30 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
             "title": f"チケット{i}",
             "description": "テスト用説明",
             "created_at": f"2025-04-10T0{i % 10}:00:00+09:00",
-            "requester_department": "営業部",
-            "category": "技術的障害",
-            "priority": "通常",
+            "customer_name": f"顧客{i}",
+            "category": "配送関連",
+            "priority": "中",
             "status": "完了",
-            "assigned_team": "IT Support",
+            "assigned_team": "窓口担当",
             "resolution": "解決済み",
             "version": 1,
         }
         for i in range(1, 11)
     ]
-    (seed_dir / "tickets.json").write_text(
+    (seed_dir / "tickets_student.json").write_text(
         json.dumps(tickets, ensure_ascii=False), encoding="utf-8"
     )
     (seed_dir / "masters.json").write_text(
         json.dumps(
             {
-                "categories": [{"category_id": "CAT01", "category_name": "技術的障害"}],
-                "priorities": [{"priority_id": "P01", "priority_name": "緊急"}],
-                "support-teams": [{"team_id": "T01", "team_name": "IT Support"}],
-                "services": [{"service_id": "SVC01", "service_name": "VPN接続"}],
+                "categories": [{"category_id": "CAT01", "category_name": "配送関連"}],
+                "priorities": [{"priority_id": "P01", "priority_name": "高"}],
+                "support-teams": [{"team_id": "T01", "team_name": "窓口担当"}],
+                "statuses": [{"status_id": "ST01", "status_name": "未対応"}],
+                "handling-types": [{"handling_type_id": "H01", "handling_type_name": "FAQで回答"}],
+                "inquiry-types": [
+                    {"inquiry_type_id": "IT01", "inquiry_type_name": "配送について"}
+                ],
             },
             ensure_ascii=False,
         ),
@@ -59,11 +63,11 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
         {
             "chunk_id": "c1",
             "document_id": "doc1",
-            "text": "VPN接続のトラブルシューティング手順",
-            "title": "VPNトラブルシューティング",
+            "text": "配送日を変更したい",
+            "title": "配送日を変更したい",
             "source": "test",
             "document_type": "faq",
-            "category": "技術的障害",
+            "category": "配送関連",
             "position": 0,
         }
     ]
@@ -136,17 +140,21 @@ def test_tickets_crud(client: TestClient) -> None:
 
     # 2. Create ticket
     new_ticket = {
-        "title": "テスト障害報告",
-        "description": "テスト用の詳細説明です。",
-        "requester_department": "品質保証部",
+        "customer_name": "佐藤 美咲",
+        "customer_email": "misaki@example.com",
+        "order_number": "MK-24581",
+        "product_name": "3人掛けソファ「モリ」",
+        "inquiry_type": "配送について",
+        "description": "配送日を変更したい",
     }
     res = client.post("/api/v1/tickets", json=new_ticket)
     assert res.status_code == 201
     created = res.json()
     ticket_id = created["ticket_id"]
     assert ticket_id.startswith("TKT-")
-    assert created["title"] == "テスト障害報告"
-    assert created["status"] == "新規"
+    assert created["title"].startswith("3人掛けソファ「モリ」")
+    assert created["customer_name"] == "佐藤 美咲"
+    assert created["status"] == "未対応"
     assert created["version"] == 1
     assert "Location" in res.headers
 
@@ -156,11 +164,11 @@ def test_tickets_crud(client: TestClient) -> None:
     assert res.json()["ticket_id"] == ticket_id
 
     # 4. Update ticket - success
-    update_payload = {"version": 1, "category": "技術的障害", "status": "対応中"}
+    update_payload = {"version": 1, "category": "配送関連", "status": "対応中"}
     res = client.patch(f"/api/v1/tickets/{ticket_id}", json=update_payload)
     assert res.status_code == 200
     updated = res.json()
-    assert updated["category"] == "技術的障害"
+    assert updated["category"] == "配送関連"
     assert updated["status"] == "対応中"
     assert updated["version"] == 2
 

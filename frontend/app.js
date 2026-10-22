@@ -22,7 +22,7 @@ const ticketDetail    = document.getElementById("ticketDetail");
 const detailId        = document.getElementById("detailId");
 const detailStatus    = document.getElementById("detailStatus");
 const detailTitle     = document.getElementById("detailTitle");
-const detailDept      = document.getElementById("detailDept");
+const detailMeta      = document.getElementById("detailMeta");
 const detailDesc      = document.getElementById("detailDesc");
 const btnSearch       = document.getElementById("btnSearch");
 const btnDraft        = document.getElementById("btnDraft");
@@ -35,6 +35,13 @@ const draftMeta       = document.getElementById("draftMeta");
 const errorBox        = document.getElementById("errorBox");
 const loadingSpinner  = document.getElementById("loadingSpinner");
 const providerBadge   = document.getElementById("providerBadge");
+const inquiryForm   = document.getElementById("inquiryForm");
+const formInquiry   = document.getElementById("formInquiry");
+const inquiryTypes  = document.getElementById("inquiryTypes");
+const inquiryDone   = document.getElementById("inquiryDone");
+const doneTicketId  = document.getElementById("doneTicketId");
+const btnNewInquiry = document.getElementById("btnNewInquiry");
+const btnSubmitInq  = document.getElementById("btnSubmitInquiry");
 
 // ── Utilities ──────────────────────────────────────────────────────────────
 function showError(msg) {
@@ -131,6 +138,7 @@ function renderTicketItem(ticket) {
 function selectTicket(ticket) {
   currentTicketId = ticket.ticket_id;
   clearError();
+  inquiryForm.classList.add("hidden");
 
   // Highlight selected
   ticketList.querySelectorAll("li").forEach(li => {
@@ -141,7 +149,13 @@ function selectTicket(ticket) {
   detailId.textContent = ticket.ticket_id;
   detailStatus.textContent = ticket.status;
   detailTitle.textContent = ticket.title;
-  detailDept.textContent = "依頼部署: " + (ticket.requester_department || "—");
+  // 氏名・メール・注文番号は検索・回答案生成へ渡さない。表示のみ（textContent）
+  detailMeta.textContent = [
+    "お客様: " + (ticket.customer_name || "—"),
+    "商品: " + (ticket.product_name || "—"),
+    "カテゴリ: " + (ticket.category || "未判定"),
+    "緊急度: " + (ticket.priority || "未判定"),
+  ].join(" | ");
   detailDesc.textContent = ticket.description;
 
   // Reset RAG sections
@@ -165,10 +179,13 @@ btnSearch.addEventListener("click", async () => {
 
   try {
     const ticket = await apiFetch("/tickets/" + currentTicketId);
-    const query = ticket.title + " " + ticket.description;
+    // 検索Queryは お問い合わせ種類・商品名・問い合わせ内容 に限定する（個人情報は送らない）
+    const query = [ticket.inquiry_type, ticket.product_name, ticket.description]
+      .filter(Boolean)
+      .join(" ");
     const data = await apiFetch("/search", {
       method: "POST",
-      body: JSON.stringify({ query: query.slice(0, 500), top_k: 5 }),
+      body: JSON.stringify({ query: query.slice(0, 4000), top_k: 5 }),
     });
 
     searchList.innerHTML = "";
@@ -240,6 +257,8 @@ btnDraft.addEventListener("click", async () => {
       citationList.appendChild(li);
     }
 
+    renderSuggestion(data.classification_suggestion);
+
     const meta = data.metadata || {};
     draftMeta.textContent =
       `Provider: ${meta.provider || "—"} | Model: ${meta.model || "—"} | Request ID: ${meta.request_id || "—"}`;
@@ -249,6 +268,120 @@ btnDraft.addEventListener("click", async () => {
     showError("回答案の生成に失敗しました: " + e.message);
   } finally {
     hideLoading();
+  }
+});
+
+function renderSuggestion(suggestion) {
+  let box = document.getElementById("suggestionBox");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "suggestionBox";
+    box.className = "suggestion-box";
+    draftText.parentNode.insertBefore(box, draftText);
+  }
+  if (!suggestion) {
+    box.classList.add("hidden");
+    return;
+  }
+  const label = { category: "カテゴリ", priority: "緊急度", handling_type: "対応区分",
+                  assigned_team: "担当", faq_id: "FAQ番号" };
+  const parts = Object.keys(label)
+    .filter(k => suggestion[k])
+    .map(k => `${label[k]}: ${suggestion[k]}`);
+  box.textContent = "分類案（確定値ではありません。担当者が確認してください） " + parts.join(" / ");
+  box.classList.remove("hidden");
+}
+
+// ── Inquiry form ───────────────────────────────────────────────────────────
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ORDER_RE = /^[A-Z0-9-]{1,40}$/;
+
+async function loadInquiryTypes() {
+  inquiryTypes.textContent = "";
+  try {
+    const data = await apiFetch("/masters/inquiry-types");
+    data.items.forEach(item => {
+      const label = document.createElement("label");
+      const radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = "inquiryType";
+      radio.value = item.inquiry_type_name;
+      label.appendChild(radio);
+      label.appendChild(document.createTextNode(item.inquiry_type_name));
+      inquiryTypes.appendChild(label);
+    });
+  } catch (e) {
+    showError("問い合わせ種類の取得に失敗しました: " + e.message);
+  }
+}
+
+function checkField(field) {
+  let ok = true;
+  const type = field.dataset.type;
+  if (type === "radio") {
+    ok = !!field.querySelector("input:checked");
+  } else {
+    const el = field.querySelector("input,textarea");
+    const v = el.value.trim();
+    if (type === "order") ok = v === "" || ORDER_RE.test(v);
+    else {
+      ok = v.length > 0;
+      if (ok && type === "email") ok = EMAIL_RE.test(v);
+    }
+  }
+  field.classList.toggle("invalid", !ok);
+  return ok;
+}
+
+function openInquiryForm() {
+  clearError();
+  currentTicketId = null;
+  ticketList.querySelectorAll("li").forEach(li => li.classList.remove("active"));
+  noSelection.classList.add("hidden");
+  ticketDetail.classList.add("hidden");
+  formInquiry.reset();
+  formInquiry.classList.remove("hidden");
+  inquiryDone.classList.add("hidden");
+  formInquiry.querySelectorAll(".invalid").forEach(f => f.classList.remove("invalid"));
+  inquiryForm.classList.remove("hidden");
+}
+
+btnNewInquiry.addEventListener("click", openInquiryForm);
+
+formInquiry.addEventListener("submit", async e => {
+  e.preventDefault();
+  clearError();
+  const fields = [...formInquiry.querySelectorAll(".field[data-req], .field[data-type=order]")];
+  const results = fields.map(checkField);
+  if (results.includes(false)) {
+    fields[results.indexOf(false)].scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+
+  const photo = document.getElementById("fPhoto");
+  // 受付番号・作成日時・ステータスはBackendが決定する。Browserからは送らない
+  const payload = {
+    customer_name: document.getElementById("fName").value.trim(),
+    customer_email: document.getElementById("fEmail").value.trim(),
+    order_number: document.getElementById("fOrder").value.trim() || null,
+    product_name: document.getElementById("fProduct").value.trim() || null,
+    inquiry_type: formInquiry.querySelector("input[name=inquiryType]:checked").value,
+    description: document.getElementById("fBody").value.trim(),
+    has_attachment: photo.files.length > 0,
+  };
+
+  btnSubmitInq.disabled = true;
+  try {
+    const ticket = await apiFetch("/tickets", { method: "POST", body: JSON.stringify(payload) });
+    doneTicketId.textContent = ticket.ticket_id;  // textContent: XSS防止
+    formInquiry.classList.add("hidden");
+    inquiryDone.classList.remove("hidden");
+    loadTickets(true);
+  } catch (err) {
+    showError("送信に失敗しました: " + err.message);
+  } finally {
+    btnSubmitInq.disabled = false;
   }
 });
 
@@ -266,3 +399,4 @@ btnLoadMore.addEventListener("click", () => loadTickets(false));
 // ── Init ───────────────────────────────────────────────────────────────────
 loadProvider();
 loadTickets(true);
+loadInquiryTypes();

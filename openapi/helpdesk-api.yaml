@@ -108,7 +108,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [categories, priorities, support-teams, services]
+            enum: [categories, priorities, support-teams, statuses, handling-types, inquiry-types]
       responses:
         "200":
           description: Master entries
@@ -181,27 +181,49 @@ components:
     Ticket:
       type: object
       additionalProperties: false
-      required: [ticket_id, title, description, created_at, requester_department, status, version]
+      required: [ticket_id, title, description, created_at, customer_name, status, version]
       properties:
         ticket_id: {type: string, maxLength: 40}
         title: {type: string, minLength: 1, maxLength: 200}
-        description: {type: string, minLength: 1, maxLength: 10000}
+        description: {type: string, minLength: 1, maxLength: 4000}
         created_at: {type: string, format: date-time}
-        requester_department: {type: string, maxLength: 100}
+        requester_department:
+          type: [string, "null"]
+          maxLength: 100
+          deprecated: true
+          description: Deprecated。新規データでは使用しない（将来削除候補）。
+        customer_name: {type: string, minLength: 1, maxLength: 100}
+        customer_email: {type: [string, "null"], maxLength: 254, pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"}
+        order_number: {type: [string, "null"], pattern: "^[A-Z0-9-]{1,40}$"}
+        product_name: {type: [string, "null"], maxLength: 200}
+        inquiry_type: {type: [string, "null"], maxLength: 40}
         category: {type: [string, "null"], maxLength: 40}
         priority: {type: [string, "null"], maxLength: 40}
+        handling_type: {type: [string, "null"], maxLength: 40}
         status: {type: string, maxLength: 40}
         assigned_team: {type: [string, "null"], maxLength: 80}
+        faq_id: {type: [string, "null"], pattern: "^FAQ-[0-9]{2,4}$"}
+        notes: {type: [string, "null"], maxLength: 4000}
         resolution: {type: [string, "null"], maxLength: 10000}
+        has_attachment: {type: boolean, default: false}
         version: {type: integer, minimum: 1}
     TicketCreate:
       type: object
+      description: 問い合わせフォーム項目。受付番号・作成日時・ステータス・versionはBackendが生成する。
       additionalProperties: false
-      required: [title, description, requester_department]
+      required: [customer_name, customer_email, inquiry_type, description]
       properties:
-        title: {type: string, minLength: 1, maxLength: 200}
-        description: {type: string, minLength: 1, maxLength: 10000}
-        requester_department: {type: string, minLength: 1, maxLength: 100}
+        customer_name: {type: string, minLength: 1, maxLength: 100}
+        customer_email: {type: string, maxLength: 254, pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"}
+        order_number: {type: [string, "null"], pattern: "^[A-Z0-9-]{1,40}$"}
+        product_name: {type: [string, "null"], maxLength: 200}
+        inquiry_type:
+          type: string
+          minLength: 1
+          maxLength: 40
+          description: inquiry-types Masterのinquiry_type_nameのいずれか。未知の値は422。
+        description: {type: string, minLength: 1, maxLength: 4000}
+        has_attachment: {type: boolean, default: false}
     TicketUpdate:
       type: object
       additionalProperties: false
@@ -210,8 +232,10 @@ components:
       properties:
         category: {type: [string, "null"], maxLength: 40}
         priority: {type: [string, "null"], maxLength: 40}
+        handling_type: {type: [string, "null"], maxLength: 40}
         status: {type: string, maxLength: 40}
         assigned_team: {type: [string, "null"], maxLength: 80}
+        faq_id: {type: [string, "null"], pattern: "^FAQ-[0-9]{2,4}$"}
         resolution: {type: [string, "null"], maxLength: 10000}
         version: {type: integer, minimum: 1}
     TicketPage:
@@ -270,12 +294,27 @@ components:
         source: {type: string}
         snippet: {type: string, maxLength: 1000}
         score: {type: number, minimum: -1, maximum: 1}
+    ClassificationSuggestion:
+      type: object
+      description: 分類基準に基づくLLMの提案。確定値ではなく、必ず担当者が確認する。
+      additionalProperties: false
+      properties:
+        category: {type: [string, "null"], maxLength: 40}
+        priority: {type: [string, "null"], maxLength: 40}
+        handling_type: {type: [string, "null"], maxLength: 40}
+        assigned_team: {type: [string, "null"], maxLength: 80}
+        faq_id: {type: [string, "null"], pattern: "^FAQ-[0-9]{2,4}$"}
     DraftAnswerResponse:
       type: object
+      description: 氏名・メールアドレス・注文番号・添付を含まない。
       required: [draft_answer, citations, needs_human_confirmation, missing_information, metadata]
       properties:
         draft_answer: {type: string}
         citations: {type: array, items: {$ref: "#/components/schemas/Citation"}}
+        classification_suggestion:
+          oneOf:
+            - {$ref: "#/components/schemas/ClassificationSuggestion"}
+            - {type: "null"}
         needs_human_confirmation: {type: boolean, const: true}
         missing_information: {type: array, items: {type: string}}
         metadata:

@@ -97,13 +97,13 @@ uv python install 3.14
 
 ### 4.3 Mock + Chromaモード起動
 
-repositoryには`data/seed/`と再生成元の`assets/source/*.xlsx`が含まれている。通常はSeed再生成を省略できるが、再現性を確認する場合はコメントを外して実行する。
+repositoryには`data/seed/`と再生成元の`assets/source/business_tools/`が含まれている。通常はSeed再生成を省略できるが、再現性を確認する場合はコメントを外して実行する。
 
 ```bash
 cp .env.example .env
 uv sync --extra dev
 # Seedを元Excelから再生成する場合だけ実行
-# uv run python backend/scripts/export_seed_data.py
+# uv run python backend/scripts/import_business_tools.py export
 uv run python backend/scripts/build_index.py
 uv run uvicorn helpdesk.main:app --app-dir backend/src --reload --host 127.0.0.1 --port 8000
 ```
@@ -164,13 +164,13 @@ uv python install 3.14
 
 ### 5.3 Mock + Chromaモード起動
 
-repositoryには`data/seed/`と再生成元の`assets/source/*.xlsx`が含まれている。通常はSeed再生成を省略できるが、再現性を確認する場合はコメントを外して実行する。
+repositoryには`data/seed/`と再生成元の`assets/source/business_tools/`が含まれている。通常はSeed再生成を省略できるが、再現性を確認する場合はコメントを外して実行する。
 
 ```powershell
 Copy-Item .env.example .env
 uv sync --extra dev
 # Seedを元Excelから再生成する場合だけ実行
-# uv run python backend/scripts/export_seed_data.py
+# uv run python backend/scripts/import_business_tools.py export
 uv run python backend/scripts/build_index.py
 uv run uvicorn helpdesk.main:app --app-dir backend/src --reload --host 127.0.0.1 --port 8000
 ```

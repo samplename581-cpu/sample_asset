@@ -208,7 +208,31 @@ Mac／Windows別の補足は[環境構築手順](./docs/環境構築手順_Mac_W
 
 ## 8. （オプション）検索文書再構築手順
 
-RAGの検索対象は`data/seed/documents.json`です。検索文書を追加・変更した場合は、Chromaインデックスを再構築します。
+RAGの検索対象は`data/seed/documents.json`です。これは業務ツール4ファイル（FAQ回答集、問い合わせ分類基準表、問い合わせ管理シート、問い合わせフォーム）から生成します。検索文書を変更した場合は、Chromaインデックスを再構築します。
+
+### 業務ツールのExcelを正本として編集する場合
+
+`assets/source/business_tools/`のファイルを編集した後、次を実行します。実行時に親ディレクトリは参照しません。
+
+```bash
+uv run python backend/scripts/import_business_tools.py validate   # 検証のみ。出力は変更しない
+uv run python backend/scripts/import_business_tools.py export     # 検証後、Seedを一括置換
+uv run python backend/scripts/build_index.py                      # Chromaインデックス再構築
+```
+
+| ファイル | repository内の名前 | 用途 |
+|---|---|---|
+| `FAQ回答集.xlsx` | `faq_answers.xlsx` | 検索文書（FAQ） |
+| `問い合わせ分類基準表.xlsx` | `inquiry_classification.xlsx` | 検索文書（分類基準）、Master |
+| `問い合わせ管理シート.xlsx` | `inquiry_management.xlsx` | Ticket初期データ（「集計」Sheetは対象外） |
+| `問い合わせフォーム.html` | `inquiry_form.html` | お問い合わせ種類のMaster |
+
+- 検証エラーは`file`／`sheet`／`row`／`column`／`error_code`だけを出力し、セルの内容は出力しません。
+- 未知のカテゴリ・担当などはエラーになります。`import_business_tools.py`内の対応表を更新してください。
+- `export`は`data/seed/`と`data/evaluation/ticket_gold.json`を再生成します。実行前に差分をCommitするかバックアップし、実行後は`git diff -- data/seed data/evaluation`で確認してください。
+- `data/evaluation/ticket_gold.json`は正解データです。受講者へ配布しないでください。通常起動は正解fieldを除外した`tickets_student.json`を使用します（`TICKET_SEED_FILE`で変更可能）。
+
+`export_seed_data.py`は互換用で、`import_business_tools.py export`を呼び出します。
 
 ### JSONを直接編集する場合
 
@@ -226,30 +250,25 @@ uv run uvicorn helpdesk.main:app --app-dir backend/src --reload --host 127.0.0.1
 
 ```json
 {
-  "document_id": "faq:vpn-01",
-  "title": "VPNに接続できない場合",
-  "body": "ネットワーク接続を確認し、VPNクライアントを再起動してください。",
+  "document_id": "faq:FAQ-16",
+  "title": "配送日を変更したい",
+  "body": "質問: 配送日を変更したい\n回答: ...\n窓口対応: はい",
   "document_type": "faq",
-  "source": "internal-helpdesk",
-  "category": "技術的障害",
+  "source": "FAQ回答集.xlsx#FAQ回答集!20",
+  "category": "配送関連",
   "updated_at": "2026-10-21",
   "access_scope": "student",
-  "is_active": true
+  "is_active": true,
+  "faq_id": "FAQ-16",
+  "completion_policy": "はい"
 }
 ```
 
-削除する文書は、履歴を残す場合は`is_active`を`false`にします。
+`document_type`は`faq`、`classification_rule`、`priority_rule`です。削除する文書は、履歴を残す場合は`is_active`を`false`にします。
 
-### Excelを正本として編集する場合
+### 個人情報の取扱い
 
-`assets/source/helpdesk_documents.xlsx`を編集した後、次を実行します。
-
-```bash
-uv run python backend/scripts/export_seed_data.py
-uv run python backend/scripts/build_index.py
-```
-
-`export_seed_data.py`は検索文書だけでなく、`assets/source/`にあるTicketとMasterのExcelから対応するSeed JSONも再生成します。意図しない上書きを避けるため、実行前に差分をCommitするかバックアップしてください。GitでCloneした場合は、実行後に`git diff -- data/seed data/evaluation`で変更内容を確認します。
+氏名、メールアドレス、注文番号、備考、添付はTicketにのみ保存し、Embedding、Chroma、LLM Prompt、Logへ渡しません。RAGへ渡す情報は「お問い合わせ種類」「商品名」「問い合わせ内容」に限定しています。`data/runtime/`と`data/index/`はGit管理対象外です。演習終了時に削除してください。
 
 ## 9. （オプション）拡張構成
 
@@ -257,5 +276,6 @@ uv run python backend/scripts/build_index.py
 - IBM Cloud Milvus: `.env.container.example`
 - ローカルEmbedding: `uv sync --extra local-embedding`
 - 構成・設計の詳細: [構成設計書](./docs/構成設計書.md)、[要件定義書](./docs/要件定義書.md)
+- 業務ツール取込: [業務ツール取込・RAG連携 修正設計書](./docs/業務ツール取込_修正設計.md)
 
 これらは初回セットアップには不要です。

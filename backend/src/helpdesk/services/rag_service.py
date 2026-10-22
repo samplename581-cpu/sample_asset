@@ -9,10 +9,12 @@ from typing import TYPE_CHECKING
 from helpdesk.domain.errors import ValidationError
 from helpdesk.domain.models import (
     Citation,
+    ClassificationSuggestion,
     DraftAnswerResponse,
     DraftAnswerResponseMeta,
     SearchItem,
     SearchResponse,
+    Ticket,
 )
 from helpdesk.ports.embeddings import EmbeddingPort
 from helpdesk.ports.llm import ChatMessage, LLMPort
@@ -22,6 +24,39 @@ if TYPE_CHECKING:
     from helpdesk.config import Settings
 
 logger = logging.getLogger("helpdesk.services.rag_service")
+
+_SECTION_TITLES = {
+    "faq": "FAQ回答",
+    "classification_rule": "カテゴリ分類基準",
+    "priority_rule": "緊急度基準",
+}
+_FAQ_ID_RE = re.compile(r"^FAQ-[0-9]{2,4}$")
+
+
+def build_ticket_query(ticket: Ticket) -> str:
+    """TicketからRAG検索・Promptへ渡す文字列を組み立てる。
+
+    許可fieldは お問い合わせ種類・商品名・問い合わせ内容 だけ。
+    お客様名・メールアドレス・注文番号・備考・添付は渡さない。
+    """
+    lines: list[str] = []
+    if ticket.inquiry_type:
+        lines.append(f"お問い合わせ種類: {ticket.inquiry_type}")
+    if ticket.product_name:
+        lines.append(f"商品名: {ticket.product_name}")
+    lines.append(f"問い合わせ内容: {ticket.description}")
+    return "\n".join(lines)
+
+
+def _document_type_of(document_id: str) -> str:
+    """document_idの接頭辞から文書種別を判定する（SearchItemはdocument_typeを持たない）。"""
+    if document_id.startswith("faq:"):
+        return "faq"
+    if document_id.startswith("classification:category:"):
+        return "classification_rule"
+    if document_id.startswith("classification:priority:"):
+        return "priority_rule"
+    return "other"
 
 
 class RagService:
@@ -101,17 +136,13 @@ class RagService:
         # 5. Prompt を組み立てる
         # [S1]...[Sn] の allow-list を作成
         citation_map: dict[str, SearchItem] = {}
-        reference_lines: list[str] = []
         for idx, item in enumerate(valid_items, start=1):
-            cid = f"S{idx}"
-            citation_map[cid] = item
-            # chunk_1: snippet or text
-            reference_lines.append(f"[{cid}] {item.title}: {item.snippet}")
+            citation_map[f"S{idx}"] = item
 
-        references_text = "\n".join(reference_lines)
+        references_text = _build_references_text(citation_map)
 
         system_prompt = (
-            "あなたは社内ヘルプデスク担当者の回答作成を支援します。\n"
+            "あなたは家具販売会社の問い合わせ窓口担当者の回答作成を支援します。\n"
             "次のルールを守ってください。\n"
             "- 参照情報だけを根拠に回答する。\n"
             "- 参照情報にない手順、URL、連絡先を作らない。\n"
@@ -128,8 +159,13 @@ class RagService:
             '  "draft_answer": "...",\n'
             '  "citation_ids": ["S1"],\n'
             '  "needs_human_confirmation": true,\n'
-            '  "missing_information": []\n'
-            "}"
+            '  "missing_information": [],\n'
+            '  "classification_suggestion": {\n'
+            '    "category": null, "priority": null, "handling_type": null,\n'
+            '    "assigned_team": null, "faq_id": null\n'
+            "  }\n"
+            "}\n"
+            "classification_suggestion は参照情報の分類基準に基づく提案であり、確定値ではありません。"
         )
 
         messages = [
@@ -210,10 +246,20 @@ class RagService:
                         )
                     )
 
+        suggestion = _parse_suggestion(
+            parsed_data.get("classification_suggestion"),
+            allowed_faq_ids={
+                it.document_id.removeprefix("faq:")
+                for it in citation_map.values()
+                if it.document_id.startswith("faq:")
+            },
+        )
+
         # 10. DraftAnswerResponse を返す (needs_human_confirmation は常に True)
         return DraftAnswerResponse(
             draft_answer=raw_answer,
             citations=final_citations,
+            classification_suggestion=suggestion,
             needs_human_confirmation=True,
             missing_information=raw_missing if isinstance(raw_missing, list) else [],
             metadata=DraftAnswerResponseMeta(
@@ -222,3 +268,37 @@ class RagService:
                 request_id=request_id,
             ),
         )
+
+
+def _build_references_text(citation_map: dict[str, SearchItem]) -> str:
+    """検索結果を文書種別ごとのSectionに分け、出典IDを付与する。"""
+    sections: dict[str, list[str]] = {}
+    for cid, item in citation_map.items():
+        kind = _document_type_of(item.document_id)
+        sections.setdefault(kind, []).append(f"[{cid}] {item.title}: {item.snippet}")
+    blocks: list[str] = []
+    for kind in ("faq", "classification_rule", "priority_rule", "other"):
+        if kind in sections:
+            heading = _SECTION_TITLES.get(kind, "その他")
+            blocks.append(f"## {heading}\n" + "\n".join(sections[kind]))
+    return "\n\n".join(blocks)
+
+
+def _parse_suggestion(
+    raw: object, allowed_faq_ids: set[str]
+) -> ClassificationSuggestion | None:
+    """LLM出力の分類提案を検証する。不正な値は捨て、確定値としては扱わない。"""
+    if not isinstance(raw, dict):
+        return None
+    values: dict[str, str | None] = {}
+    for key, limit in (("category", 40), ("priority", 40), ("handling_type", 40), ("assigned_team", 80)):
+        v = raw.get(key)
+        values[key] = v.strip() if isinstance(v, str) and 0 < len(v.strip()) <= limit else None
+    faq = raw.get("faq_id")
+    # 引用に含まれるFAQ番号だけを許可する（存在しないFAQの捏造を防ぐ）
+    values["faq_id"] = (
+        faq if isinstance(faq, str) and _FAQ_ID_RE.match(faq) and faq in allowed_faq_ids else None
+    )
+    if not any(values.values()):
+        return None
+    return ClassificationSuggestion(**values)

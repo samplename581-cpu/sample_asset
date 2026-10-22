@@ -154,6 +154,10 @@ def _load_rag_service(settings: Any) -> RagService | None:
                 document_type=str(c["document_type"]),
                 category=str(c["category"]) if c.get("category") is not None else None,
                 position=int(str(c["position"])),
+                faq_id=str(c["faq_id"]) if c.get("faq_id") is not None else None,
+                completion_policy=(
+                    str(c["completion_policy"]) if c.get("completion_policy") is not None else None
+                ),
             )
             for c in chunks_raw
         ]
@@ -195,6 +199,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.ticket_repository = JsonTicketRepository(
         seed_data_dir=settings.SEED_DATA_DIR,
         runtime_data_dir=settings.RUNTIME_DATA_DIR,
+        seed_file_name=settings.TICKET_SEED_FILE,
     )
     app.state.rag_service = _load_rag_service(settings)
     app.state.llm = create_llm(settings)

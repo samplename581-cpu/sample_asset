@@ -1,5 +1,8 @@
-from fastapi import APIRouter, Header, Path, Query, Request, Response, status
+from fastapi import APIRouter, Depends, Header, Path, Query, Request, Response, status
 
+from helpdesk.api.masters import read_master
+from helpdesk.config import Settings, get_settings
+from helpdesk.domain.errors import NotFoundError, ValidationError
 from helpdesk.domain.models import Ticket, TicketCreate, TicketPage, TicketUpdate
 from helpdesk.services.ticket_service import TicketService
 
@@ -41,7 +44,16 @@ def create_ticket(
     data: TicketCreate,
     request: Request,
     response: Response,
+    settings: Settings = Depends(get_settings),
 ) -> Ticket:
+    # inquiry_type は Master の allow-list に含まれる値だけを受け付ける
+    try:
+        allowed = {item.get("inquiry_type_name") for item in read_master(settings, "inquiry-types")}
+    except NotFoundError as exc:
+        raise ValidationError("inquiry-types master is unavailable") from exc
+    if data.inquiry_type not in allowed:
+        raise ValidationError("Unknown inquiry_type")
+
     service = get_ticket_service(request)
     ticket = service.create_ticket(data)
     response.headers["Location"] = f"{request.url.path}/{ticket.ticket_id}"
