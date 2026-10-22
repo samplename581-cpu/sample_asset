@@ -59,7 +59,7 @@ def _chunk_document(doc: dict[str, Any]) -> list[ChunkRecord]:
             document_type=doc_type,
             category=doc.get("category"),
             position=0,
-            access_scope=str(doc.get("access_scope", "student")),
+            access_scope=str(doc.get("access_scope", "default")),
             is_active=bool(doc.get("is_active", True)),
             faq_id=doc.get("faq_id"),
             completion_policy=doc.get("completion_policy"),

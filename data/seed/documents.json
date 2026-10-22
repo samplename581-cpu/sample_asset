@@ -7,7 +7,7 @@
     "source": "FAQ回答集.xlsx#FAQ回答集!5",
     "category": "配送関連",
     "updated_at": "2026-10-01",
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true,
     "faq_id": "FAQ-01",
     "completion_policy": "はい"
@@ -20,7 +20,7 @@
     "source": "FAQ回答集.xlsx#FAQ回答集!6",
     "category": "配送関連",
     "updated_at": "2026-10-01",
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true,
     "faq_id": "FAQ-02",
     "completion_policy": "はい"
@@ -33,7 +33,7 @@
     "source": "FAQ回答集.xlsx#FAQ回答集!7",
     "category": "配送関連",
     "updated_at": "2026-10-01",
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true,
     "faq_id": "FAQ-03",
     "completion_policy": "はい"
@@ -46,7 +46,7 @@
     "source": "FAQ回答集.xlsx#FAQ回答集!8",
     "category": "配送関連",
     "updated_at": "2026-10-01",
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true,
     "faq_id": "FAQ-04",
     "completion_policy": "いいえ（配送センター担当）"
@@ -59,7 +59,7 @@
     "source": "FAQ回答集.xlsx#FAQ回答集!9",
     "category": "配送関連",
     "updated_at": "2026-10-01",
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true,
     "faq_id": "FAQ-05",
     "completion_policy": "はい"
@@ -72,7 +72,7 @@
     "source": "FAQ回答集.xlsx#FAQ回答集!10",
     "category": "商品不良・破損",
     "updated_at": "2026-10-01",
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true,
     "faq_id": "FAQ-06",
     "completion_policy": "いいえ（修理・アフターサービス担当）"
@@ -85,7 +85,7 @@
     "source": "FAQ回答集.xlsx#FAQ回答集!11",
     "category": "商品不良・破損",
     "updated_at": "2026-10-01",
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true,
     "faq_id": "FAQ-07",
     "completion_policy": "はい"
@@ -98,7 +98,7 @@
     "source": "FAQ回答集.xlsx#FAQ回答集!12",
     "category": "組み立て・使い方",
     "updated_at": "2026-10-01",
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true,
     "faq_id": "FAQ-08",
     "completion_policy": "はい"
@@ -111,7 +111,7 @@
     "source": "FAQ回答集.xlsx#FAQ回答集!13",
     "category": "組み立て・使い方",
     "updated_at": "2026-10-01",
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true,
     "faq_id": "FAQ-09",
     "completion_policy": "はい"
@@ -124,7 +124,7 @@
     "source": "FAQ回答集.xlsx#FAQ回答集!14",
     "category": "注文変更・キャンセル",
     "updated_at": "2026-10-01",
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true,
     "faq_id": "FAQ-10",
     "completion_policy": "はい（出荷後は配送センター担当）"
@@ -137,7 +137,7 @@
     "source": "FAQ回答集.xlsx#FAQ回答集!15",
     "category": "注文変更・キャンセル",
     "updated_at": "2026-10-01",
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true,
     "faq_id": "FAQ-11",
     "completion_policy": "はい（出荷後は配送センター担当）"
@@ -150,7 +150,7 @@
     "source": "FAQ回答集.xlsx#FAQ回答集!16",
     "category": "注文変更・キャンセル",
     "updated_at": "2026-10-01",
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true,
     "faq_id": "FAQ-12",
     "completion_policy": "はい"
@@ -163,7 +163,7 @@
     "source": "FAQ回答集.xlsx#FAQ回答集!17",
     "category": "店舗・在庫・その他",
     "updated_at": "2026-10-01",
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true,
     "faq_id": "FAQ-13",
     "completion_policy": "はい"
@@ -176,7 +176,7 @@
     "source": "FAQ回答集.xlsx#FAQ回答集!18",
     "category": "店舗・在庫・その他",
     "updated_at": "2026-10-01",
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true,
     "faq_id": "FAQ-14",
     "completion_policy": "はい"
@@ -189,7 +189,7 @@
     "source": "FAQ回答集.xlsx#FAQ回答集!19",
     "category": "組み立て・使い方",
     "updated_at": "2026-10-01",
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true,
     "faq_id": "FAQ-15",
     "completion_policy": "はい"
@@ -202,7 +202,7 @@
     "source": "問い合わせ分類基準表.xlsx#カテゴリ!5",
     "category": "配送関連",
     "updated_at": null,
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true
   },
   {
@@ -213,7 +213,7 @@
     "source": "問い合わせ分類基準表.xlsx#カテゴリ!6",
     "category": "商品不良・破損",
     "updated_at": null,
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true
   },
   {
@@ -224,7 +224,7 @@
     "source": "問い合わせ分類基準表.xlsx#カテゴリ!7",
     "category": "組み立て・使い方",
     "updated_at": null,
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true
   },
   {
@@ -235,7 +235,7 @@
     "source": "問い合わせ分類基準表.xlsx#カテゴリ!8",
     "category": "注文変更・キャンセル",
     "updated_at": null,
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true
   },
   {
@@ -246,7 +246,7 @@
     "source": "問い合わせ分類基準表.xlsx#カテゴリ!9",
     "category": "店舗・在庫・その他",
     "updated_at": null,
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true
   },
   {
@@ -257,7 +257,7 @@
     "source": "問い合わせ分類基準表.xlsx#緊急度!5",
     "category": null,
     "updated_at": null,
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true
   },
   {
@@ -268,7 +268,7 @@
     "source": "問い合わせ分類基準表.xlsx#緊急度!6",
     "category": null,
     "updated_at": null,
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true
   },
   {
@@ -279,7 +279,7 @@
     "source": "問い合わせ分類基準表.xlsx#緊急度!7",
     "category": null,
     "updated_at": null,
-    "access_scope": "student",
+    "access_scope": "default",
     "is_active": true
   }
 ]

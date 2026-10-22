@@ -33,7 +33,7 @@ def store(tmp_path: Path) -> ChromaVectorStore:
                 "title": "VPN",
                 "source": "vpn.md",
                 "document_type": "faq",
-                "access_scope": "student",
+                "access_scope": "default",
                 "is_active": True,
             },
             {
@@ -49,7 +49,7 @@ def store(tmp_path: Path) -> ChromaVectorStore:
                 "title": "Old",
                 "source": "old.md",
                 "document_type": "faq",
-                "access_scope": "student",
+                "access_scope": "default",
                 "is_active": False,
             },
         ],
@@ -62,7 +62,7 @@ def test_search_filters_scope_type_and_inactive_records(store: ChromaVectorStore
         np.array([1.0, 0.0], dtype=np.float32),
         top_k=3,
         document_types=["faq"],
-        access_scope="student",
+        access_scope="default",
         min_score=0.0,
     )
 
@@ -74,7 +74,7 @@ def test_search_filters_scope_type_and_inactive_records(store: ChromaVectorStore
 
 def test_search_rejects_untrusted_filter_values(store: ChromaVectorStore) -> None:
     with pytest.raises(ValidationError, match="Invalid access_scope"):
-        store.search(np.array([1.0, 0.0]), access_scope='student" or true')
+        store.search(np.array([1.0, 0.0]), access_scope='default" or true')
 
     with pytest.raises(ValidationError, match="Invalid document type"):
         store.search(np.array([1.0, 0.0]), document_types=["faq OR true"])

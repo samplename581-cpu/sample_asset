@@ -108,16 +108,12 @@ def test_ticket_mapping_and_null_normalization() -> None:
     assert t15["status"] == "未対応"
 
 
-def test_student_tickets_hide_all_answer_fields() -> None:
+def test_app_tickets_start_with_unassigned_fields() -> None:
     bundle = ibt.build_seed(_SOURCE)
-    assert len(bundle.tickets_student) == 20
-    for t in bundle.tickets_student:
+    assert len(bundle.tickets_app) == 20
+    for t in bundle.tickets_app:
         for f in ("category", "priority", "handling_type", "assigned_team", "faq_id", "notes"):
             assert t[f] is None, f
-    gold = {g["ticket_id"]: g for g in bundle.ticket_gold}
-    assert gold["Q1020-01"]["category"] == "配送関連"
-    assert gold["Q1020-15"]["category"] is None  # 未判定6件はgoldも未判定
-    assert sum(1 for g in gold.values() if g["category"] is None) == 6
 
 
 def test_documents_contain_no_personal_data() -> None:
@@ -228,7 +224,7 @@ def test_export_writes_all_files_and_leaves_no_temp(tmp_path: Path) -> None:
     assert ibt.run("export", _SOURCE, out) == 0
     for rel in (
         "seed/documents.json", "seed/masters.json", "seed/tickets.json",
-        "seed/tickets_student.json", "evaluation/ticket_gold.json",
+        "seed/tickets_app.json",
     ):  # fmt: skip
         assert json.loads((out / rel).read_text(encoding="utf-8")) is not None
     assert [p.name for p in out.iterdir() if p.name.startswith(".")] == []

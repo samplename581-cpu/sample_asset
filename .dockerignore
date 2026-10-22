@@ -9,6 +9,5 @@
 **/.ruff_cache
 data/runtime/*
 data/index/*
-data/evaluation
 *.log
 .DS_Store

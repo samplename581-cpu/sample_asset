@@ -53,8 +53,8 @@ class Settings(BaseSettings):
     MILVUS_TLS: bool = True
 
     SEED_DATA_DIR: str = "./data/seed"
-    # 通常起動では正解fieldを除外したStudent用Ticketを使用する（評価Dataは配信しない）
-    TICKET_SEED_FILE: str = "tickets_student.json"
+    # 画面とAPIで使用する初期Ticket
+    TICKET_SEED_FILE: str = "tickets_app.json"
     RUNTIME_DATA_DIR: str = "./data/runtime"
     INDEX_DIR: str = "./data/index"
 

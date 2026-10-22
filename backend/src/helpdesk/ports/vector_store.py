@@ -17,7 +17,7 @@ class ChunkRecord:
     document_type: str
     category: str | None
     position: int
-    access_scope: str = "student"
+    access_scope: str = "default"
     is_active: bool = True
     # FAQ文書のみ。任意辞書は型が曖昧になるため個別fieldとして保持する
     faq_id: str | None = None

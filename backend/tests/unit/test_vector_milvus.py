@@ -77,9 +77,9 @@ def test_search_includes_access_scope_filter() -> None:
     client = _FakeMilvusClient()
     store = MilvusVectorStore(client, "knowledge")
 
-    store.search(np.array([0.1], dtype=np.float32), min_score=0.0, access_scope="student")
+    store.search(np.array([0.1], dtype=np.float32), min_score=0.0, access_scope="default")
 
-    assert client.search_kwargs["filter"] == 'is_active == true and access_scope == "student"'
+    assert client.search_kwargs["filter"] == 'is_active == true and access_scope == "default"'
 
 
 def test_search_rejects_invalid_access_scope() -> None:
@@ -88,7 +88,7 @@ def test_search_rejects_invalid_access_scope() -> None:
     store = MilvusVectorStore(client, "knowledge")
 
     with pytest.raises(ValidationError, match="Invalid access_scope"):
-        store.search(np.array([0.1], dtype=np.float32), access_scope='student" or true')
+        store.search(np.array([0.1], dtype=np.float32), access_scope='default" or true')
 
     assert client.search_kwargs == {}
 

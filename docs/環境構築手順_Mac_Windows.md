@@ -39,25 +39,21 @@ Python、uv、Docker／Podman、Node.jsは事前導入不要である。Python 3
 - `https://pypi.org`および`https://files.pythonhosted.org`（Python依存関係）
 - `https://jp-tok.ml.cloud.ibm.com`（watsonx.ai利用時のみ）
 
-組織Proxy、SSL inspection、PowerShell実行制限、ソフトウェア導入申請がある場合は、演習日前に運営担当が確認する。
+組織Proxy、SSL inspection、PowerShell実行制限がある場合は、セットアップ前に利用環境の管理者へ確認する。
 
-### 3.3 運営担当から受領するもの
+### 3.3 watsonx.ai利用時に必要な情報
 
-運営担当から次を受領する。
+次の情報を準備する。
 
-- `sample_asset` Git repositoryのURL、または`sample_asset.zip`
-- 申請・準備済みのWatson Machine Learning（watsonx.ai Runtime）、watsonx.ai Studio Project、Cloud Object Storage
 - watsonx.ai URL、Project ID、生成Model ID、Embedding Model ID
 - IBM Cloud API Key
 - Embedding出力次元
 
-API Keyやpasswordをチャット、提出物、Git、画面キャプチャへ含めない。
-
-学生はIBM Cloudサービスを新規作成しない。FastAPIが直接接続するのはwatsonx.ai Runtime APIであり、Vector DBは学生端末上のChromaを使用する。StudioとCloud Object Storageは運営側がProjectへ関連付けておく。
+API Keyやpasswordをチャット、Git、画面キャプチャへ含めない。FastAPIが直接接続するのはwatsonx.ai Runtime APIであり、Vector DBには端末上のChromaを使用する。
 
 ### 3.4 所要時間
 
-Mock + Chromaの初回起動は30～90分、トラブル対応を含めて2時間以内を目安とする。watsonx.aiのサービス申請や社内ソフトウェア申請は含めない。
+Mock + Chromaの初回起動は30～90分、トラブル対応を含めて2時間以内を目安とする。
 
 | 作業 | 目安 |
 |---|---:|
@@ -187,7 +183,7 @@ uv run python backend/scripts/build_index.py
 uv run uvicorn helpdesk.main:app --app-dir backend/src --host 127.0.0.1 --port 8000
 ```
 
-`.env`はACLで受講者本人と必要な管理者だけが読める場所に置く。確認:
+`.env`は利用者本人と必要な管理者だけが読める場所に置く。確認:
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8000/api/v1/health/live
@@ -228,7 +224,7 @@ podman compose up --build -d
 
 ## 7. Proxy／Firewall
 
-次のOutbound通信を許可する。実際のhostとportは運営担当が配布する。
+次のOutbound通信を許可する。watsonx.aiのhostは`.env`の`WATSONX_URL`を確認する。
 
 - watsonx.ai: HTTPS／TCP 443
 - Python dependency取得: 初回setup時だけPyPI等へのHTTPSが必要
@@ -238,9 +234,9 @@ podman compose up --build -d
 ## 8. 終了・削除
 
 1. FastAPIまたはComposeを停止する。
-2. `.env`を提出物・ZIPへ含めない。
-3. 演習終了後、運営担当の指示に従って`.env`とruntimeデータを削除する。
-4. 演習終了時に不要な`data/index/chroma/`を削除し、運営担当は2026年12月31日にAPI Keyを失効する。
+2. `.env`をGitや共有ZIPへ含めない。
+3. 使用終了後、不要な`.env`とruntimeデータを削除する。
+4. 不要な`data/index/chroma/`を削除し、使用しないAPI Keyを失効する。
 
 ## 9. トラブルシューティング
 

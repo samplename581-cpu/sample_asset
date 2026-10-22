@@ -37,7 +37,7 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
         }
         for i in range(1, 11)
     ]
-    (seed_dir / "tickets_student.json").write_text(
+    (seed_dir / "tickets_app.json").write_text(
         json.dumps(tickets, ensure_ascii=False), encoding="utf-8"
     )
     (seed_dir / "masters.json").write_text(

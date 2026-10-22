@@ -107,8 +107,8 @@ _TICKET_FIELD_COLUMNS = {
     "notes": "備考",
 }
 
-# Student用Ticketでnullへ置換する正解field
-_STUDENT_HIDDEN_FIELDS = (
+# アプリケーションの初期表示では未判定として扱うfield
+_APP_HIDDEN_FIELDS = (
     "category",
     "priority",
     "handling_type",
@@ -116,7 +116,6 @@ _STUDENT_HIDDEN_FIELDS = (
     "faq_id",
     "notes",
 )
-_GOLD_FIELDS = ("category", "priority", "handling_type", "assigned_team", "faq_id")
 
 # (file, sheet, row)
 Location = tuple[str, str, int]
@@ -142,8 +141,7 @@ class SeedBundle:
     documents: list[dict[str, Any]]
     masters: dict[str, list[dict[str, Any]]]
     tickets: list[dict[str, Any]]
-    tickets_student: list[dict[str, Any]]
-    ticket_gold: list[dict[str, Any]]
+    tickets_app: list[dict[str, Any]]
 
 
 # ---------------------------------------------------------------------------
@@ -349,7 +347,7 @@ def _document(
         "source": source,
         "category": category,
         "updated_at": updated_at,
-        "access_scope": "student",
+        "access_scope": "default",
         "is_active": True,
     }
     if faq_id is not None:
@@ -622,15 +620,10 @@ def build_seed(source_dir: Path) -> SeedBundle:
         "handling-types": _ordered(HANDLING_TYPE_IDS, handlings, "handling_type"),
         "inquiry-types": inquiry_type_items,
     }
-    tickets_student = [
-        {k: (None if k in _STUDENT_HIDDEN_FIELDS else v) for k, v in t.items()} for t in tickets
+    tickets_app = [
+        {k: (None if k in _APP_HIDDEN_FIELDS else v) for k, v in t.items()} for t in tickets
     ]
-    ticket_gold = [
-        {"ticket_id": t["ticket_id"], **{f: t[f] for f in _GOLD_FIELDS}} for t in tickets
-    ]
-    return SeedBundle(
-        faq_docs + category_docs + priority_docs, masters, tickets, tickets_student, ticket_gold
-    )
+    return SeedBundle(faq_docs + category_docs + priority_docs, masters, tickets, tickets_app)
 
 
 # ---------------------------------------------------------------------------
@@ -644,8 +637,7 @@ def _outputs(bundle: SeedBundle) -> dict[str, Any]:
         "seed/documents.json": bundle.documents,
         "seed/masters.json": bundle.masters,
         "seed/tickets.json": bundle.tickets,
-        "seed/tickets_student.json": bundle.tickets_student,
-        "evaluation/ticket_gold.json": bundle.ticket_gold,
+        "seed/tickets_app.json": bundle.tickets_app,
     }
 
 

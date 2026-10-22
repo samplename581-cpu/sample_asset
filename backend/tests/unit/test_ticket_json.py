@@ -149,7 +149,7 @@ def test_create_ticket_ids_are_sequential_and_unique(tmp_repo: JsonTicketReposit
 
 
 def test_seed_file_name_is_configurable(tmp_path: Path) -> None:
-    """seed_file_name で Student用Ticketを選択できること。"""
+    """seed_file_nameで初期表示用Ticketを選択できること。"""
     seed_dir = tmp_path / "seed"
     seed_dir.mkdir()
     base = {
@@ -160,18 +160,18 @@ def test_seed_file_name_is_configurable(tmp_path: Path) -> None:
         "status": "未対応",
     }
     (seed_dir / "tickets.json").write_text(
-        json.dumps([{**base, "ticket_id": "TKT-GOLD01", "category": "配送関連"}]), encoding="utf-8"
+        json.dumps([{**base, "ticket_id": "TKT-SOURCE1", "category": "配送関連"}]), encoding="utf-8"
     )
-    (seed_dir / "tickets_student.json").write_text(
-        json.dumps([{**base, "ticket_id": "TKT-STUDENT1"}]), encoding="utf-8"
+    (seed_dir / "tickets_app.json").write_text(
+        json.dumps([{**base, "ticket_id": "TKT-APP0001"}]), encoding="utf-8"
     )
     repo = JsonTicketRepository(
         seed_data_dir=str(seed_dir),
         runtime_data_dir=str(tmp_path / "runtime"),
-        seed_file_name="tickets_student.json",
+        seed_file_name="tickets_app.json",
     )
     page = repo.list_tickets()
-    assert [t.ticket_id for t in page.items] == ["TKT-STUDENT1"]
+    assert [t.ticket_id for t in page.items] == ["TKT-APP0001"]
     assert page.items[0].category is None
 
 

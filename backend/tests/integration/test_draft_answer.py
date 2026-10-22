@@ -38,7 +38,7 @@ def client_with_rag(tmp_path_factory: pytest.TempPathFactory) -> TestClient:
             "version": 1,
         }
     ]
-    (seed_dir / "tickets_student.json").write_text(
+    (seed_dir / "tickets_app.json").write_text(
         json.dumps(tickets, ensure_ascii=False), encoding="utf-8"
     )
 

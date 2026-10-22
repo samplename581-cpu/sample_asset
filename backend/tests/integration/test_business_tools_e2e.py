@@ -87,7 +87,7 @@ def test_search_after_restart_returns_chroma_hits(client: TestClient) -> None:
     assert all(i["source"] for i in res.json()["items"])
 
 
-def test_student_tickets_are_served_without_labels(client: TestClient) -> None:
+def test_app_tickets_are_served_with_unassigned_fields(client: TestClient) -> None:
     res = client.get("/api/v1/tickets?limit=100")
     items = res.json()["items"]
     assert len(items) == 20
