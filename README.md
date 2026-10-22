@@ -32,7 +32,7 @@ Python、uv、Docker、Node.jsの事前インストールは不要です。セ�
 repositoryの画面にある「Code」からClone URLを取得し、次の`<repository-url>`へ指定します。
 
 ```bash
-git clone <repository-url> ~/sample_asset
+git clone https://github.ibm.com/Shin-Sakamoto1/sample_asset.git ~/sample_asset
 cd ~/sample_asset
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
