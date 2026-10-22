@@ -12,3 +12,5 @@ chroma-data/
 .DS_Store
 frontend/node_modules/
 frontend/dist/
+.docs/
+sample_asset/RAG共通基盤_詳細設計.md
