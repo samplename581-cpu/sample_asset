@@ -20,7 +20,7 @@
 | Git／ZIP | GitでCloneできること。Gitを使わない場合はZIPを展開できること |
 | Browser | Chrome、Edge、Firefox、Safariのいずれか |
 | Network | Git repository、`astral.sh`、PyPIへHTTPS接続できること |
-| PC | 空き容量1GB以上、メモリ4GB以上 |
+| PC | 空き容量2GB以上、メモリ4GB以上 |
 | Port | TCP 8000番が空いていること |
 
 Python、uv、Docker、Node.jsの事前インストールは不要です。セットアップの目安は30～90分です。
@@ -45,12 +45,14 @@ uv python install 3.14
 cp .env.example .env
 uv sync
 uv run python backend/scripts/build_index.py
-uv run uvicorn helpdesk.main:app --app-dir backend/src --reload --host 127.0.0.1 --port 8000
+uv run uvicorn helpdesk.main:app --app-dir backend/src --host 127.0.0.1 --port 8000
 ```
 
 ### Windows（PowerShell）
 
 repositoryの画面にある「Code」からClone URLを取得し、次の`<repository-url>`へ指定します。
+
+> ChromaのファイルをOneDriveが同期すると、インデックス構築時に`WinError 5`が発生することがあります。OneDrive配下ではなく、`C:\work\sample_asset`のような短いローカルパスを使用してください。
 
 ```powershell
 git clone <repository-url> C:\work\sample_asset
@@ -58,7 +60,20 @@ Set-Location C:\work\sample_asset
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-PowerShellを開き直してから続けます。
+インストール直後のPowerShellで`uv`が見つからない場合は、インストール先を現在のセッションのPATHへ追加します。
+
+```powershell
+$uvBin = Join-Path $HOME ".local\bin"
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if (($userPath -split ";") -notcontains $uvBin) {
+    $newUserPath = if ([string]::IsNullOrWhiteSpace($userPath)) { $uvBin } else { "$userPath;$uvBin" }
+    [Environment]::SetEnvironmentVariable("Path", $newUserPath, "User")
+}
+$env:Path = "$uvBin;$env:Path"
+uv --version
+```
+
+続けて、次のコマンドを順番に実行します。
 
 ```powershell
 Set-Location C:\work\sample_asset
@@ -66,10 +81,15 @@ uv python install 3.14
 Copy-Item .env.example .env
 uv sync
 uv run python backend/scripts/build_index.py
-uv run uvicorn helpdesk.main:app --app-dir backend/src --reload --host 127.0.0.1 --port 8000
 ```
 
-Gitを利用しない場合は、repositoryをZIPでダウンロードし、`C:\work\sample_asset`など日本語や空白を含まない短いパスへ展開してください。展開後は`uv python install 3.14`以降を実行します。
+`Index written to ...\data\index`と表示されたことを確認してから、サーバーを起動します。`PermissionError`やTracebackが表示された場合は起動せず、後述のトラブルシューティングを確認してください。
+
+```powershell
+uv run uvicorn helpdesk.main:app --app-dir backend/src --host 127.0.0.1 --port 8000
+```
+
+Gitを利用しない場合は、repositoryをZIPでダウンロードし、`C:\work\sample_asset`などOneDrive外かつ日本語や空白を含まない短いパスへ展開してください。展開後は`uv python install 3.14`以降を実行します。
 
 ## 3. 起動確認
 
@@ -137,7 +157,7 @@ Embeddingを変更したため、インデックスを再構築してから起�
 
 ```bash
 uv run python backend/scripts/build_index.py
-uv run uvicorn helpdesk.main:app --app-dir backend/src --reload --host 127.0.0.1 --port 8000
+uv run uvicorn helpdesk.main:app --app-dir backend/src --host 127.0.0.1 --port 8000
 ```
 
 ## 5. アプリケーション構成
@@ -198,10 +218,13 @@ uv sync --extra dev
 
 | 症状 | 対応 |
 |---|---|
-| `uv`が見つからない | Terminal／PowerShellを開き直す |
+| Windowsで`uv`が見つからない | `$env:Path = "$(Join-Path $HOME '.local\bin');$env:Path"`を実行してから`uv --version`で確認する |
 | 8000番Portを使用できない | 既に起動しているアプリを停止する |
 | `/health/ready`が503 | `.env`を確認し、サーバー停止後に`build_index.py`を再実行する |
 | Chromaを開けない | 複数のFastAPI processを停止し、インデックスを再構築する |
+| Windowsで`WinError 5` | FastAPIを`Ctrl+C`で停止し、OneDrive外の`C:\work\sample_asset`へ展開し直す。残った`data\index`、`data\index.new`、`data\index.old`は生成物なので削除してから再構築する |
+| `WatchFiles detected changes in '.venv'`が繰り返される | 初回確認では`--reload`を付けずに起動する。起動中のprocessは`Ctrl+C`で停止してから再実行する |
+| `/favicon.ico`が404 | Browserのアイコン要求であり、アプリケーション動作には影響しない |
 | watsonx.ai接続に失敗する | URL、Project ID、モデルIDを確認する。API Keyは画面やログへ出力しない |
 
 Mac／Windows別の補足は[環境構築手順](./docs/環境構築手順_Mac_Windows.md)を参照してください。
@@ -240,7 +263,7 @@ uv run python backend/scripts/build_index.py                      # Chromaイン
 
 ```bash
 uv run python backend/scripts/build_index.py
-uv run uvicorn helpdesk.main:app --app-dir backend/src --reload --host 127.0.0.1 --port 8000
+uv run uvicorn helpdesk.main:app --app-dir backend/src --host 127.0.0.1 --port 8000
 ```
 
 文書は次の形式で追加します。`document_id`は重複させず、既存文書を更新するときは同じIDを維持してください。

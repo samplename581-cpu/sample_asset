@@ -199,36 +199,41 @@ def main() -> None:
             path=str(new_dir / "chroma"),
             settings=ChromaSettings(anonymized_telemetry=False),
         )
-        collection_name = settings.CHROMA_COLLECTION
-        collection = chroma_client.create_collection(
-            name=collection_name,
-            embedding_function=None,
-            metadata={"hnsw:space": "cosine"},
-        )
-        collection.add(
-            ids=[c.chunk_id for c in all_chunks],
-            embeddings=vectors.astype(np.float32).tolist(),
-            documents=[c.text for c in all_chunks],
-            metadatas=[
-                {
-                    "document_id": c.document_id,
-                    "title": c.title,
-                    "source": c.source,
-                    "document_type": c.document_type,
-                    "access_scope": c.access_scope,
-                    "is_active": c.is_active,
-                    "position": c.position,
-                    **({"category": c.category} if c.category is not None else {}),
-                    **({"faq_id": c.faq_id} if c.faq_id is not None else {}),
-                    **(
-                        {"completion_policy": c.completion_policy}
-                        if c.completion_policy is not None
-                        else {}
-                    ),
-                }
-                for c in all_chunks
-            ],
-        )
+        try:
+            collection_name = settings.CHROMA_COLLECTION
+            collection = chroma_client.create_collection(
+                name=collection_name,
+                embedding_function=None,
+                metadata={"hnsw:space": "cosine"},
+            )
+            collection.add(
+                ids=[c.chunk_id for c in all_chunks],
+                embeddings=vectors.astype(np.float32).tolist(),
+                documents=[c.text for c in all_chunks],
+                metadatas=[
+                    {
+                        "document_id": c.document_id,
+                        "title": c.title,
+                        "source": c.source,
+                        "document_type": c.document_type,
+                        "access_scope": c.access_scope,
+                        "is_active": c.is_active,
+                        "position": c.position,
+                        **({"category": c.category} if c.category is not None else {}),
+                        **({"faq_id": c.faq_id} if c.faq_id is not None else {}),
+                        **(
+                            {"completion_policy": c.completion_policy}
+                            if c.completion_policy is not None
+                            else {}
+                        ),
+                    }
+                    for c in all_chunks
+                ],
+            )
+        finally:
+            # WindowsではSQLiteを開いたままdirectoryをrenameできないため、
+            # atomic swapの前にChromaのfile handleを解放する。
+            chroma_client.close()
 
         # Atomic directory swap: rename current -> old, new -> current, remove old
         if index_dir.exists():

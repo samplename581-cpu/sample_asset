@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 
 import chromadb
@@ -13,7 +14,7 @@ from helpdesk.domain.errors import ValidationError
 
 
 @pytest.fixture()
-def store(tmp_path: Path) -> ChromaVectorStore:
+def store(tmp_path: Path) -> Iterator[ChromaVectorStore]:
     client = chromadb.PersistentClient(
         path=str(tmp_path / "chroma"),
         settings=ChromaSettings(anonymized_telemetry=False),
@@ -54,7 +55,11 @@ def store(tmp_path: Path) -> ChromaVectorStore:
             },
         ],
     )
-    return ChromaVectorStore(client, collection)
+    store = ChromaVectorStore(client, collection)
+    try:
+        yield store
+    finally:
+        store.close()
 
 
 def test_search_filters_scope_type_and_inactive_records(store: ChromaVectorStore) -> None:
@@ -78,3 +83,18 @@ def test_search_rejects_untrusted_filter_values(store: ChromaVectorStore) -> Non
 
     with pytest.raises(ValidationError, match="Invalid document type"):
         store.search(np.array([1.0, 0.0]), document_types=["faq OR true"])
+
+
+def test_close_releases_chroma_client() -> None:
+    class ClosableClient:
+        closed = False
+
+        def close(self) -> None:
+            self.closed = True
+
+    client = ClosableClient()
+    store = ChromaVectorStore(client, object())
+
+    store.close()
+
+    assert client.closed is True

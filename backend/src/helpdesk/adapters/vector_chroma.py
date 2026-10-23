@@ -121,5 +121,6 @@ class ChromaVectorStore:
             raise ProviderError("Unable to read Chroma collection statistics") from exc
 
     def close(self) -> None:
-        # PersistentClient flushes writes automatically and exposes no close operation.
-        return None
+        close = getattr(self._client, "close", None)
+        if callable(close):
+            close()
