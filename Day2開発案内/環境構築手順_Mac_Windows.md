@@ -25,7 +25,7 @@
 | Git／ZIP | GitでCloneできること。Git未導入の場合はZIP展開で代替可能 |
 | Browser | 最新版のChrome、Edge、Firefox、Safariのいずれか |
 | 権限 | ユーザー領域へのuv／Python導入と作業directoryへの書込・実行権限 |
-| PCリソース | 空き容量10GB以上、メモリ4GB以上を目安とする |
+| PCリソース | 空き容量2GB以上、メモリ4GB以上を目安とする |
 | Port | localhostのTCP 8000番が利用可能であること |
 
 Python、uv、Docker／Podman、Node.jsは事前導入不要である。Python 3.14とuvは本手順内で導入し、Docker／Podmanは任意の発展構成でのみ使用する。
@@ -97,11 +97,11 @@ repositoryには`data/seed/`と再生成元の`assets/source/business_tools/`が
 
 ```bash
 cp .env.example .env
-uv sync --extra dev
+uv sync
 # Seedを元Excelから再生成する場合だけ実行
 # uv run python backend/scripts/import_business_tools.py export
 uv run python backend/scripts/build_index.py
-uv run uvicorn helpdesk.main:app --app-dir backend/src --reload --host 127.0.0.1 --port 8000
+uv run uvicorn helpdesk.main:app --app-dir backend/src --host 127.0.0.1 --port 8000
 ```
 
 Browserで`http://127.0.0.1:8000`を開く。
@@ -116,7 +116,7 @@ cp .env.example .env
 
 ```bash
 chmod 600 .env
-uv sync --extra watsonx --extra dev
+uv sync --extra watsonx
 uv run python backend/scripts/build_index.py
 uv run uvicorn helpdesk.main:app --app-dir backend/src --host 127.0.0.1 --port 8000
 ```
@@ -132,7 +132,7 @@ curl http://127.0.0.1:8000/api/v1/health/ready
 
 ### 5.1 CloneまたはZIP展開
 
-Git repositoryをCloneするか、Explorerで`sample_asset.zip`の「すべて展開」を選択する。OneDrive配下、空白や日本語を多く含む深いpathを避ける。
+Git repositoryをCloneするか、Explorerで`sample_asset.zip`の「すべて展開」を選択する。ChromaのファイルをOneDriveが同期すると`WinError 5`になることがあるため、OneDrive配下は使用しない。`C:\work\sample_asset`のような短いローカルpathを使用する。
 
 Cloneする場合はPowerShellで実行する。
 
@@ -151,12 +151,21 @@ ZIPの場合は`C:\work\sample_asset`へ展開して同じディレクトリへ�
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-新しいPowerShellを開き、確認する。
+インストール直後のPowerShellで`uv`が認識されない場合は、実際のインストール先である`$HOME\.local\bin`を現在のセッションのPATHへ追加する。
 
 ```powershell
+$uvBin = Join-Path $HOME ".local\bin"
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if (($userPath -split ";") -notcontains $uvBin) {
+    $newUserPath = if ([string]::IsNullOrWhiteSpace($userPath)) { $uvBin } else { "$userPath;$uvBin" }
+    [Environment]::SetEnvironmentVariable("Path", $newUserPath, "User")
+}
+$env:Path = "$uvBin;$env:Path"
 uv --version
 uv python install 3.14
 ```
+
+`uv --version`でversionが表示されれば導入完了である。この設定はUser PATHにも保存されるため、次回以降のPowerShellでも`uv`を利用できる。
 
 ### 5.3 Mock + Chromaモード起動
 
@@ -164,21 +173,26 @@ repositoryには`data/seed/`と再生成元の`assets/source/business_tools/`が
 
 ```powershell
 Copy-Item .env.example .env
-uv sync --extra dev
+uv sync
 # Seedを元Excelから再生成する場合だけ実行
 # uv run python backend/scripts/import_business_tools.py export
 uv run python backend/scripts/build_index.py
-uv run uvicorn helpdesk.main:app --app-dir backend/src --reload --host 127.0.0.1 --port 8000
 ```
 
-Browserで`http://127.0.0.1:8000`を開く。
+`Index written to ...\data\index`が表示され、Tracebackがないことを確認してから起動する。PowerShellへ複数行を貼り付けると、途中のコマンドが失敗しても後続コマンドが実行される場合があるため、インデックス構築の成功確認を省略しない。
+
+```powershell
+uv run uvicorn helpdesk.main:app --app-dir backend/src --host 127.0.0.1 --port 8000
+```
+
+初回確認では`--reload`を付けない。`--reload`を付けると環境によって`.venv`内の変更を検知し、再起動を繰り返すことがある。Browserで`http://127.0.0.1:8000`を開く。
 
 ### 5.4 watsonx.ai接続
 
 ```powershell
 Copy-Item .env.example .env -Force
 # .envでwatsonx.aiの値とEMBEDDING_DIMENSIONを設定する
-uv sync --extra watsonx --extra dev
+uv sync --extra watsonx
 uv run python backend/scripts/build_index.py
 uv run uvicorn helpdesk.main:app --app-dir backend/src --host 127.0.0.1 --port 8000
 ```
@@ -242,12 +256,17 @@ podman compose up --build -d
 
 | 症状 | 確認内容 |
 |---|---|
+| Windowsで`uv`が認識されない | `$env:Path = "$(Join-Path $HOME '.local\bin');$env:Path"`を実行し、`uv --version`で確認する |
 | `uv sync`がPython version error | Python 3.14をインストールしているか。`uv python install 3.14`を実行する |
 | `/health/ready`が503 | `.env`、Seed、`data/index/chroma/`を確認し、`build_index.py`を再実行 |
 | watsonx.aiが401／403 | API Key、Project権限、Project ID、URLを確認 |
 | Chromaを開けない | FastAPIを停止し、`data/index/`を再構築。複数processから同時更新しない |
+| `PermissionError: [WinError 5]` | FastAPIを停止し、OneDrive外の`C:\work\sample_asset`へ展開し直す。生成途中の`data\index`、`data\index.new`、`data\index.old`を削除してから再構築する |
+| `Failed to open local Chroma` | インデックス構築が失敗した状態で起動している。FastAPIを停止し、`build_index.py`を正常完了させてから再起動する |
+| `WatchFiles detected changes in '.venv'`が繰り返される | `Ctrl+C`で停止し、`--reload`なしの起動コマンドを使用する |
+| `/favicon.ico`が404 | Browserのアイコン要求であり、アプリケーション動作には影響しない |
 | Browserから開けない | FastAPIが起動し、`127.0.0.1:8000`を使用しているか |
-| Windowsでpath error | 短いASCII pathへ展開し直す |
+| Windowsでpath error | OneDrive外の短いASCII pathへ展開し直す |
 
 ## 10. 公式資料
 

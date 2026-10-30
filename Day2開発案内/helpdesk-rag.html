@@ -1,0 +1,1054 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Helpdesk RAG サンプルアセット 構成図</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    background: #ffffff;
+    color: #1f2328;
+    padding: 32px 24px 48px;
+  }
+  h1 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #1f2328;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: #57606a;
+    margin-bottom: 32px;
+  }
+
+  /* ── Section labels ─────────────────────────── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #57606a;
+    margin-bottom: 8px;
+    margin-top: 28px;
+  }
+
+  /* ── Diagram wrapper ─────────────────────────── */
+  .diagram {
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  /* ── Approval summary / deployment view ──────── */
+  .meta-grid {
+    max-width: 820px;
+    margin: 0 auto 28px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border: 1px solid #d0d7de;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .meta-item { padding: 9px 11px; border-right: 1px solid #d0d7de; background: #f7f8fa; }
+  .meta-item:last-child { border-right: none; }
+  .meta-key { display: block; font-size: 10px; color: #57606a; font-weight: 700; letter-spacing: .04em; }
+  .meta-value { display: block; margin-top: 2px; font-size: 12px; font-weight: 600; }
+  .notice {
+    max-width: 820px;
+    margin: 0 auto 24px;
+    padding: 10px 13px;
+    border-left: 4px solid #d97706;
+    background: #fffbeb;
+    color: #713f12;
+    font-size: 12px;
+  }
+  .deployment {
+    max-width: 820px;
+    margin: 0 auto 34px;
+    display: grid;
+    grid-template-columns: minmax(0, .8fr) 140px minmax(0, 1.2fr);
+    gap: 12px;
+    align-items: start;
+  }
+  .boundary {
+    border: 2px solid #64748b;
+    border-radius: 10px;
+    padding: 18px 14px 14px;
+    position: relative;
+    background: #f8fafc;
+  }
+  .boundary.cloud { border-color: #2563eb; background: #eff6ff; }
+  .boundary-title {
+    position: absolute;
+    top: -10px;
+    left: 12px;
+    padding: 0 7px;
+    background: #fff;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 800;
+  }
+  .boundary.cloud .boundary-title { color: #1d4ed8; background: #eff6ff; }
+  .deploy-box {
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    padding: 9px 10px;
+    margin-bottom: 8px;
+    background: #fff;
+    font-size: 12px;
+    font-weight: 650;
+  }
+  .deploy-box:last-child { margin-bottom: 0; }
+  .deploy-sub { display: block; margin-top: 2px; color: #57606a; font-size: 10.5px; font-weight: 400; }
+  .runtime-shell { border: 1.5px solid #64748b; background: #f8fafc; }
+  .nested-runtime {
+    display: block;
+    margin-top: 7px;
+    padding: 7px 8px;
+    border: 1px dashed #94a3b8;
+    border-radius: 5px;
+    background: #fff;
+    color: #334155;
+    font-size: 10.5px;
+    font-weight: 600;
+  }
+  .cloud-group { border: 1px dashed #93c5fd; border-radius: 7px; padding: 19px 7px 7px; margin-bottom: 9px; position: relative; }
+  .cloud-group:last-child { margin-bottom: 0; }
+  .cloud-group-title { position: absolute; top: 2px; left: 8px; font-size: 9.5px; font-weight: 800; color: #1e40af; letter-spacing: .03em; }
+  .connections { display: flex; min-height: 260px; flex-direction: column; justify-content: center; gap: 22px; }
+  .connection { text-align: center; color: #334155; font-size: 11px; font-weight: 650; }
+  .connection .line { display: block; font-size: 22px; line-height: 1; color: #2563eb; }
+  .approval-grid {
+    max-width: 820px;
+    margin: 0 auto 36px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .approval-card { border: 1px solid #d0d7de; border-radius: 8px; padding: 11px 13px; }
+  .approval-card h3 { font-size: 12px; margin-bottom: 5px; }
+  .approval-card ul { margin-left: 18px; color: #57606a; font-size: 11.5px; }
+  .internal-heading { max-width: 820px; margin: 42px auto 8px; font-size: 16px; }
+  .internal-note { max-width: 820px; margin: 0 auto 24px; color: #57606a; font-size: 12px; }
+  .architecture-section { max-width: 1000px; margin: 42px auto 0; }
+  .architecture-heading { font-size: 17px; margin-bottom: 5px; }
+  .architecture-lead { color: #57606a; font-size: 12px; margin-bottom: 16px; }
+  .diagram-card {
+    border: 1px solid #d0d7de;
+    border-radius: 10px;
+    background: #fff;
+    padding: 14px;
+    margin-bottom: 16px;
+    break-inside: avoid;
+  }
+  .diagram-card h3 { font-size: 13px; margin-bottom: 2px; }
+  .diagram-caption { color: #57606a; font-size: 11px; margin-bottom: 10px; }
+  .container-map { display: grid; grid-template-columns: 1fr 34px 1.35fr 34px 1.15fr; gap: 7px; align-items: center; }
+  .container-node { border: 1.5px solid #64748b; border-radius: 8px; padding: 12px; background: #f8fafc; text-align: center; font-size: 12px; font-weight: 700; }
+  .container-node.app { border-color: #3b82d4; background: #eff6ff; }
+  .container-node.external { border-color: #2563eb; background: #f8fbff; }
+  .container-node.data { margin-top: 8px; max-width: 260px; margin-left: calc(20% + 38px); }
+  .container-sub { display: block; margin-top: 4px; color: #57606a; font-size: 10px; font-weight: 400; }
+  .container-arrow { text-align: center; color: #2563eb; font-size: 22px; font-weight: 700; }
+  .svg-diagram { width: 100%; height: auto; display: block; }
+  .svg-diagram text { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; fill: #1f2937; }
+  .svg-diagram .title { font-size: 14px; font-weight: 700; }
+  .svg-diagram .label { font-size: 12px; font-weight: 650; }
+  .svg-diagram .small { font-size: 10px; fill: #475569; }
+  .svg-diagram .tiny { font-size: 9px; fill: #64748b; }
+  .uml-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; font-size: 10.5px; color: #57606a; }
+  .line-sample { display: inline-block; width: 28px; border-top: 2px solid #475569; margin-right: 5px; vertical-align: middle; }
+  .line-sample.dashed { border-top-style: dashed; }
+
+  /* ── Layer band ──────────────────────────────── */
+  .layer {
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 14px 16px 16px;
+    margin-bottom: 8px;
+    position: relative;
+    background: #ffffff;
+  }
+  .layer-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #57606a;
+    background: #ffffff;
+    position: absolute;
+    top: -9px;
+    left: 14px;
+    padding: 0 6px;
+  }
+  .layer.layer-browser { border-color: #d0d7de; background: #f7f8fa; }
+  .layer.layer-app     { border-color: #3b82d4; background: #f0f5ff; }
+  .layer.layer-domain  { border-color: #7c5cd8; background: #f8f4ff; }
+  .layer.layer-application { border-color: #6366f1; background: #f5f3ff; }
+  .layer.layer-ports   { border-color: #2a9d50; background: #f0fbf4; }
+  .layer.layer-adapters{ border-color: #e07b20; background: #fff8f0; }
+  .layer.layer-infra   { border-color: #d0d7de; background: #f7f8fa; }
+
+  /* ── Box grid ────────────────────────────────── */
+  .box-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .box {
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    border: 1.5px solid transparent;
+  }
+  .box-sub {
+    font-size: 10px;
+    color: #57606a;
+    font-weight: 400;
+    display: block;
+    margin-top: 1px;
+  }
+
+  /* box colours per layer */
+  .layer-browser .box { background: #eaeef2; border-color: #c9d0d8; color: #1f2328; }
+  .layer-app     .box { background: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+  .layer-domain  .box { background: #ede9fe; border-color: #c4b5fd; color: #6d28d9; }
+  .layer-ports   .box { background: #dcfce7; border-color: #86efac; color: #166534; }
+  .layer-adapters .box { background: #fff7ed; border-color: #fdba74; color: #9a3412; }
+  .layer-infra   .box { background: #f3f4f6; border-color: #d1d5db; color: #374151; }
+
+  /* pill-shaped sub-tags */
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 99px;
+    padding: 1px 7px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .tag-std  { background: #dbeafe; color: #1d4ed8; }
+  .tag-mock { background: #dcfce7; color: #166534; }
+  .tag-ext  { background: #ede9fe; color: #6d28d9; }
+
+  /* ── Arrow connector ────────────────────────── */
+  .arrow-down {
+    text-align: center;
+    color: #57606a;
+    font-size: 18px;
+    line-height: 1;
+    margin: 4px 0;
+  }
+  .arrow-label {
+    font-size: 11px;
+    color: #57606a;
+    margin-top: -2px;
+    margin-bottom: 2px;
+    text-align: center;
+  }
+
+  /* ── Divider inside adapters ─────────────────── */
+  .group-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #9a3412;
+    margin-top: 10px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+  .group-title:first-child { margin-top: 0; }
+
+  /* ── Data flow table ─────────────────────────── */
+  .flow-section { margin-top: 36px; max-width: 820px; margin-left: auto; margin-right: auto; }
+  .flow-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: #1f2328; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th {
+    text-align: left;
+    background: #f7f8fa;
+    border-bottom: 2px solid #e5e7eb;
+    padding: 7px 10px;
+    color: #57606a;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  td { padding: 7px 10px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .mono { font-family: "SFMono-Regular", Consolas, monospace; font-size: 11.5px; color: #3b82d4; }
+  .verb { font-weight: 700; color: #57606a; font-size: 11px; }
+
+  /* ── Legend ──────────────────────────────────── */
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; max-width: 820px; margin-left: auto; margin-right: auto; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #57606a; }
+  .legend-dot {
+    width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0;
+  }
+
+  /* ── Footer ──────────────────────────────────── */
+  footer {
+    max-width: 820px;
+    margin: 40px auto 0;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+    font-size: 12px;
+    color: #57606a;
+  }
+  @media (max-width: 720px) {
+    .meta-grid, .approval-grid { grid-template-columns: 1fr; }
+    .meta-item { border-right: none; border-bottom: 1px solid #d0d7de; }
+    .deployment { grid-template-columns: 1fr; }
+    .connections { gap: 8px; }
+    .connection .line { transform: rotate(90deg); }
+  }
+  @media print {
+    body { padding: 16px; }
+    .deployment, .approval-grid, .layer, table, .diagram-card { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Helpdesk RAG サンプルアセット — 現行構成図</h1>
+<p class="subtitle">クラウド利用: Watson Machine Learning（watsonx.ai Runtime）/ watsonx.ai Studio / Cloud Object Storage　ローカルVector DB: Chroma</p>
+
+<div class="meta-grid">
+  <div class="meta-item"><span class="meta-key">文書状態</span><span class="meta-value">現行構成</span></div>
+  <div class="meta-item"><span class="meta-key">利用目的</span><span class="meta-value">学生向け演習・検証</span></div>
+  <div class="meta-item"><span class="meta-key">アプリ実行場所</span><span class="meta-value">Mac／Windows</span></div>
+  <div class="meta-item"><span class="meta-key">利用期間</span><span class="meta-value">2026/10/10～12/31</span></div>
+</div>
+
+<div class="notice">
+  IBM Cloudへアプリケーションをデプロイする必要はない。学生端末でヘルプデスクRAGサンプルアセットとChromaを実行し、Watson Machine Learning（watsonx.ai Runtime）の生成／Embedding APIへ接続する。FastAPIはサンプルアセットのAPI実行技術である。watsonx.ai StudioとCloud Object StorageはProject管理・関連ストレージであり、通常のRAGリクエスト経路には置かない。アプリはlocalhost限定で、LANやInternetからのInbound公開を行わない。
+</div>
+
+<div class="section-label" style="max-width:820px;margin-left:auto;margin-right:auto">配置・通信・信頼境界</div>
+<div class="deployment">
+  <div class="boundary">
+    <span class="boundary-title">学生端末 macOS／Windows（信頼境界）</span>
+    <div class="deploy-box">利用者ブラウザ
+      <span class="deploy-sub">HTTP localhost:8000でアクセス<br />IBM Cloud API Key・Tokenは保持しない</span>
+    </div>
+    <div class="deploy-box runtime-shell">ヘルプデスクRAGサンプルアセット
+      <span class="deploy-sub">RAG処理 + Ticket API + 静的Frontend<br />API実行: FastAPI / 127.0.0.1へbind<br />資格情報はBackend processだけが.envから取得</span>
+      <span class="nested-runtime">実行方式：Python直接実行<br />または Docker / Podman container</span>
+    </div>
+    <div class="deploy-box">ローカルデータ・設定
+      <span class="deploy-sub">data/runtime: 架空Ticket JSON<br />data/index/chroma: Vector、Chunk、metadata<br />.env: Git・ZIP・提出物の対象外</span>
+    </div>
+  </div>
+
+  <div class="connections">
+    <div class="connection"><span class="line">→</span>実行経路<br />HTTPS / TCP 443<br />Backend保持のAPI Key</div>
+  </div>
+
+  <div class="boundary cloud">
+    <span class="boundary-title">IBM Cloud</span>
+    <div class="cloud-group">
+      <span class="cloud-group-title">申請対象サービス：実行経路 / Data plane</span>
+      <div class="deploy-box">Watson Machine Learning（watsonx.ai Runtime）
+        <span class="deploy-sub">生成・Embedding API / Token・RU<br />IAM／Project権限をサービス側で検証</span>
+      </div>
+    </div>
+    <div class="cloud-group">
+      <span class="cloud-group-title">申請対象サービス：管理経路 / Control plane</span>
+      <div class="deploy-box">watsonx.ai Studio
+        <span class="deploy-sub">Project 1件の作成・管理 / 通常の回答生成経路外</span>
+      </div>
+      <div class="deploy-box">Cloud Object Storage
+        <span class="deploy-sub">Project関連ストレージ / 通常の回答生成経路外</span>
+      </div>
+    </div>
+    <div class="cloud-group">
+      <span class="cloud-group-title">共通基盤：サービス申請・見積不要 / Identity &amp; Access</span>
+      <div class="deploy-box">IBM Cloud IAM
+        <span class="deploy-sub">Service ID・API Key・Access Policyの設定依頼のみ<br />運営が最小権限で発行・配布・利用終了時に失効<br />BrowserはKey／Tokenを保持しない</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="approval-grid">
+  <div class="approval-card">
+    <h3>データと保持</h3>
+    <ul>
+      <li>教材では架空Ticket・架空社内文書だけを利用</li>
+      <li>ChromaにはVector、Chunk、検索用metadataをローカル保存</li>
+      <li>文書削除時はChunk・Vector・cacheも削除</li>
+      <li>Prompt、Ticket本文、生成全文を標準ログへ出さない</li>
+      <li>利用終了時はdata/runtimeとdata/indexを削除</li>
+    </ul>
+  </div>
+  <div class="approval-card">
+    <h3>運用と責任分界</h3>
+    <ul>
+      <li>運営: IBM Cloud、IAM、予算、Key失効</li>
+      <li>学生・教員: localhostアプリ利用と成果物管理</li>
+      <li>検索文書変更時はbuild_index.pyでChromaインデックスを再構築</li>
+      <li>模擬LLM／NumPy検索は接続不要の動作確認・テスト用</li>
+    </ul>
+  </div>
+  <div class="approval-card">
+    <h3>利用前に確定する値</h3>
+    <ul>
+      <li>IBM Cloud Region、Project ID、料金プラン</li>
+      <li>watsonx.ai Projectと既存instance再利用の有無</li>
+      <li>利用者数、演習日数、1人あたりAPI回数</li>
+      <li>生成／Embedding Model IDとVector次元</li>
+      <li>Chroma collection名とローカル保存先</li>
+      <li>利用者数、期間、rate limit、予算上限</li>
+    </ul>
+  </div>
+  <div class="approval-card">
+    <h3>実行条件</h3>
+    <ul>
+      <li>実行環境: Python 3.14</li>
+      <li>IBM Cloudへのアプリ配備は今回の必須範囲外</li>
+      <li>Python直接実行を標準とする</li>
+      <li>Vector DBはローカルChromaを標準とする</li>
+      <li>Docker／Podmanは任意。Python直接実行で代替可能</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-section">
+  <div class="flow-title">IBM Cloud利用サービスとローカル構成</div>
+  <table>
+    <thead><tr><th>コンポーネント</th><th>申請／設定</th><th>数量・算定軸</th><th>備考</th></tr></thead>
+    <tbody>
+      <tr><td>Watson Machine Learning<br />（watsonx.ai Runtime）</td><td>必須</td><td>生成入出力Token／RU + 文書・query Embedding Token／RU</td><td>独自Modelの学習・配置は行わずCUHは0</td></tr>
+      <tr><td>watsonx.ai Studio</td><td>必須</td><td>Project 1件、Studio CUH 0</td><td>Project作成・管理。Notebook等は実行しない</td></tr>
+      <tr><td>Cloud Object Storage</td><td>必須</td><td>instance 1件、保存量、Class A／B request</td><td>Project関連ストレージ。既存instance再利用時も明記</td></tr>
+      <tr><td>Chroma</td><td>申請不要</td><td>学生端末のローカルストレージ</td><td>オープンソースのVector DB。data/index/chromaへ保存</td></tr>
+      <tr><td>IBM Cloud IAM<br />Service ID／API Key／Access Policy</td><td>サービス申請不要<br />設定依頼のみ</td><td>最小権限の接続主体</td><td>見積対象外。Browserへ非公開、利用終了時に失効</td></tr>
+      <tr><td>Cloudアプリ実行／Registry</td><td>不要</td><td>0</td><td>アプリはMac／Windowsで実行</td></tr>
+      <tr><td>Docker／Podman</td><td>任意</td><td>利用可能な端末のみ</td><td>Python直接実行で代替可能</td></tr>
+    </tbody>
+  </table>
+  <p class="diagram-caption" style="margin-top:8px">IBM Cloud費用はwatsonx.aiの生成・Embedding利用量を中心に算定する。Chromaはローカルで実行するためIBM Cloudの利用料金は発生しない。</p>
+</div>
+
+<section class="architecture-section">
+  <h2 class="architecture-heading">アーキテクチャ設計図</h2>
+  <p class="architecture-lead">配置図、コンテナ図、RAGサンプルアセット内部コンポーネント図、UMLを抽象度ごとに分離して示す。FastAPIはAPI実行技術として表現する。</p>
+
+  <div class="diagram-card">
+    <h3>1. コンテナ図（システム全体）</h3>
+    <p class="diagram-caption">実行単位と主要データストアだけを示す。Studio、COS、IAMは上段の配置・管理図で扱う。</p>
+    <div class="container-map">
+      <div class="container-node">Web Browser<span class="container-sub">HTML / CSS / JavaScript<br />資格情報なし</span></div>
+      <div class="container-arrow">→</div>
+      <div class="container-node app">Helpdesk RAG Sample Asset<span class="container-sub">RAG pipeline / Ticket API / UI<br />API runtime: FastAPI<br />Python直接実行 または container</span></div>
+      <div class="container-arrow">→</div>
+      <div>
+        <div class="container-node external">watsonx.ai Runtime<span class="container-sub">生成LLM / Embedding</span></div>
+        <div class="container-node" style="margin-top:8px">Local Chroma<span class="container-sub">Vector / Chunk / Metadata<br />data/index/chroma</span></div>
+      </div>
+    </div>
+    <div class="container-node data">Local Ticket Store<span class="container-sub">演習用JSON / data/runtime</span></div>
+  </div>
+
+  <div class="diagram-card">
+    <h3>2. RAGサンプルアセット内部コンポーネント図</h3>
+    <p class="diagram-caption">RAGの検索・Context構築・回答生成・引用検証を中心に示す。FastAPIはDelivery／API実装であり、外部サービス固有処理はAdapterへ隔離する。Studio、COS、IAM、.envの配置は上段の配置図で示す。</p>
+    <svg class="svg-diagram" viewBox="0 0 1000 630" role="img" aria-label="RAGサンプルアセット内部コンポーネント図">
+      <defs>
+        <marker id="componentArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+          <path d="M0,0 L8,4 L0,8 Z" fill="#475569" />
+        </marker>
+        <marker id="componentDashedArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+          <path d="M0,0 L8,4 L0,8 Z" fill="#7c3aed" />
+        </marker>
+      </defs>
+
+      <rect x="220" y="20" width="510" height="590" rx="14" fill="#f8fafc" stroke="#64748b" stroke-width="2" />
+      <text x="240" y="47" class="title">Helpdesk RAG Sample Asset Boundary</text>
+
+      <rect x="20" y="225" width="165" height="84" rx="8" fill="#f8fafc" stroke="#64748b" stroke-width="1.5" />
+      <text x="102" y="252" text-anchor="middle" class="label">利用者ブラウザ</text>
+      <text x="102" y="273" text-anchor="middle" class="small">HTML / CSS / JavaScript</text>
+      <text x="102" y="290" text-anchor="middle" class="small">IBM Cloud資格情報なし</text>
+
+      <rect x="250" y="70" width="180" height="82" rx="8" fill="#fff" stroke="#64748b" />
+      <text x="340" y="96" text-anchor="middle" class="label">Presentation / API</text>
+      <text x="340" y="117" text-anchor="middle" class="small">HTTP schema / exception handler</text>
+      <text x="340" y="134" text-anchor="middle" class="small">Routerへrequestを委譲</text>
+
+      <rect x="470" y="70" width="210" height="82" rx="8" fill="#dbeafe" stroke="#3b82d4" stroke-width="1.5" />
+      <text x="575" y="96" text-anchor="middle" class="label">Delivery Runtime</text>
+      <text x="575" y="117" text-anchor="middle" class="small">FastAPI / main.py / wiring</text>
+      <text x="575" y="134" text-anchor="middle" class="small">Middleware / StaticFiles</text>
+
+      <rect x="250" y="200" width="180" height="92" rx="8" fill="#dbeafe" stroke="#3b82d4" />
+      <text x="340" y="225" text-anchor="middle" class="label">API Router</text>
+      <text x="340" y="246" text-anchor="middle" class="small">Ticket / Master</text>
+      <text x="340" y="263" text-anchor="middle" class="small">Search / Draft Answer</text>
+      <text x="340" y="280" text-anchor="middle" class="small">Health</text>
+
+      <rect x="470" y="200" width="210" height="92" rx="8" fill="#ede9fe" stroke="#7c5cd8" />
+      <text x="575" y="225" text-anchor="middle" class="label">RAG Orchestration</text>
+      <text x="575" y="246" text-anchor="middle" class="small">RagService</text>
+      <text x="575" y="263" text-anchor="middle" class="small">検索・Context・生成・引用検証</text>
+      <text x="575" y="280" text-anchor="middle" class="small">TicketService</text>
+
+      <rect x="470" y="320" width="210" height="112" rx="8" fill="#dcfce7" stroke="#2a9d50" />
+      <text x="575" y="346" text-anchor="middle" class="label">Application Port</text>
+      <text x="575" y="369" text-anchor="middle" class="small">LLMPort / EmbeddingPort</text>
+      <text x="575" y="388" text-anchor="middle" class="small">VectorStorePort</text>
+      <text x="575" y="407" text-anchor="middle" class="small">TicketRepository</text>
+      <text x="575" y="423" text-anchor="middle" class="tiny">外部サービスに依存しない契約</text>
+
+      <rect x="470" y="460" width="210" height="120" rx="8" fill="#fff7ed" stroke="#e07b20" />
+      <text x="575" y="485" text-anchor="middle" class="label">Infrastructure Adapter</text>
+      <text x="575" y="508" text-anchor="middle" class="small">Watsonx LLM / Embedding</text>
+      <text x="575" y="527" text-anchor="middle" class="small">ChromaVectorStore</text>
+      <text x="575" y="546" text-anchor="middle" class="small">JSON Ticket Repository</text>
+      <text x="575" y="565" text-anchor="middle" class="tiny">SDK / retry / provider error変換</text>
+
+      <rect x="765" y="390" width="190" height="66" rx="8" fill="#fff" stroke="#2563eb" />
+      <text x="860" y="414" text-anchor="middle" class="label">Watson Machine Learning</text>
+      <text x="860" y="433" text-anchor="middle" class="small">watsonx.ai Runtime</text>
+      <text x="860" y="447" text-anchor="middle" class="tiny">生成 / Embedding API</text>
+
+      <rect x="765" y="490" width="190" height="66" rx="8" fill="#f8fafc" stroke="#64748b" />
+      <text x="860" y="517" text-anchor="middle" class="label">Local Chroma</text>
+      <text x="860" y="537" text-anchor="middle" class="small">data/index/chroma</text>
+
+      <rect x="250" y="340" width="170" height="82" rx="8" fill="#ede9fe" stroke="#7c5cd8" />
+      <text x="335" y="366" text-anchor="middle" class="label">Domain</text>
+      <text x="335" y="387" text-anchor="middle" class="small">Ticket / SearchResult</text>
+      <text x="335" y="405" text-anchor="middle" class="tiny">HTTP / SDKへ依存しない業務表現</text>
+
+      <rect x="250" y="470" width="170" height="66" rx="8" fill="#fff" stroke="#64748b" />
+      <text x="335" y="496" text-anchor="middle" class="label">Configuration</text>
+      <text x="335" y="517" text-anchor="middle" class="small">config.py / Settings injection</text>
+
+      <line x1="185" y1="267" x2="246" y2="117" stroke="#475569" stroke-width="2" marker-end="url(#componentArrow)" />
+      <text x="199" y="180" class="tiny">HTTP loopback</text>
+      <line x1="430" y1="111" x2="466" y2="111" stroke="#475569" stroke-width="2" marker-end="url(#componentArrow)" />
+      <line x1="500" y1="152" x2="434" y2="200" stroke="#475569" stroke-width="2" marker-end="url(#componentArrow)" />
+      <text x="444" y="168" class="tiny">contains</text>
+      <line x1="430" y1="246" x2="466" y2="246" stroke="#475569" stroke-width="2" marker-end="url(#componentArrow)" />
+      <line x1="575" y1="292" x2="575" y2="316" stroke="#475569" stroke-width="2" marker-end="url(#componentArrow)" />
+      <line x1="575" y1="456" x2="575" y2="436" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#componentDashedArrow)" />
+      <text x="586" y="451" class="tiny">implements</text>
+      <line x1="680" y1="490" x2="761" y2="423" stroke="#475569" stroke-width="2" marker-end="url(#componentArrow)" />
+      <line x1="680" y1="530" x2="761" y2="523" stroke="#475569" stroke-width="2" marker-end="url(#componentArrow)" />
+      <line x1="470" y1="270" x2="424" y2="370" stroke="#475569" stroke-width="2" marker-end="url(#componentArrow)" />
+      <line x1="420" y1="503" x2="535" y2="156" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#componentArrow)" />
+    </svg>
+  </div>
+
+  <div class="diagram-card">
+    <h3>3. UMLクラス図（主要な依存関係）</h3>
+    <p class="diagram-caption">Serviceはinterfaceへ依存し、具体的なIBM Cloud SDKやデータ保存方法への依存をAdapterに閉じ込める。</p>
+    <svg class="svg-diagram" viewBox="0 0 1000 690" role="img" aria-label="主要クラスとinterfaceのUMLクラス図">
+      <defs>
+        <marker id="umlDependency" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+          <path d="M0,0 L10,5 L0,10" fill="none" stroke="#475569" stroke-width="1.5" />
+        </marker>
+        <marker id="umlRealization" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto">
+          <path d="M0,0 L11,6 L0,12 Z" fill="#fff" stroke="#7c3aed" stroke-width="1.5" />
+        </marker>
+      </defs>
+
+      <g>
+        <rect x="80" y="35" width="250" height="115" fill="#ede9fe" stroke="#7c5cd8" />
+        <line x1="80" y1="67" x2="330" y2="67" stroke="#7c5cd8" />
+        <text x="205" y="57" text-anchor="middle" class="label">RagService</text>
+        <text x="94" y="89" class="small">+ search(query, top_k, scope)</text>
+        <text x="94" y="109" class="small">+ draft_answer(llm, query, top_k, ...)</text>
+        <text x="94" y="129" class="small">- citation allow-list処理（method内）</text>
+
+        <rect x="670" y="35" width="250" height="100" fill="#ede9fe" stroke="#7c5cd8" />
+        <line x1="670" y1="67" x2="920" y2="67" stroke="#7c5cd8" />
+        <text x="795" y="57" text-anchor="middle" class="label">TicketService</text>
+        <text x="684" y="89" class="small">+ list / get / create / update</text>
+        <text x="684" y="109" class="small">repositoryへCRUDを委譲</text>
+      </g>
+
+      <g>
+        <rect x="20" y="245" width="215" height="100" fill="#dcfce7" stroke="#2a9d50" />
+        <line x1="20" y1="279" x2="235" y2="279" stroke="#2a9d50" />
+        <text x="127" y="267" text-anchor="middle" class="small">&lt;&lt;interface&gt;&gt;</text>
+        <text x="127" y="300" text-anchor="middle" class="label">LLMPort</text>
+        <text x="34" y="326" class="small">+ generate(messages): LLMResult</text>
+
+        <rect x="265" y="245" width="215" height="116" fill="#dcfce7" stroke="#2a9d50" />
+        <line x1="265" y1="279" x2="480" y2="279" stroke="#2a9d50" />
+        <text x="372" y="267" text-anchor="middle" class="small">&lt;&lt;interface&gt;&gt;</text>
+        <text x="372" y="300" text-anchor="middle" class="label">EmbeddingPort</text>
+        <text x="279" y="326" class="small">+ encode_query(text)</text>
+        <text x="279" y="346" class="small">+ encode_passages(texts)</text>
+
+        <rect x="510" y="245" width="215" height="116" fill="#dcfce7" stroke="#2a9d50" />
+        <line x1="510" y1="279" x2="725" y2="279" stroke="#2a9d50" />
+        <text x="617" y="267" text-anchor="middle" class="small">&lt;&lt;interface&gt;&gt;</text>
+        <text x="617" y="300" text-anchor="middle" class="label">VectorStorePort</text>
+        <text x="524" y="326" class="small">+ search(vector, top_k,</text>
+        <text x="524" y="346" class="small">  min_score, access_scope)</text>
+
+        <rect x="755" y="245" width="225" height="116" fill="#dcfce7" stroke="#2a9d50" />
+        <line x1="755" y1="279" x2="980" y2="279" stroke="#2a9d50" />
+        <text x="867" y="267" text-anchor="middle" class="small">&lt;&lt;interface&gt;&gt;</text>
+        <text x="867" y="300" text-anchor="middle" class="label">TicketRepository</text>
+        <text x="769" y="326" class="small">+ list / get</text>
+        <text x="769" y="346" class="small">+ create / update</text>
+      </g>
+
+      <g>
+        <rect x="20" y="500" width="215" height="92" fill="#fff7ed" stroke="#e07b20" />
+        <text x="127" y="530" text-anchor="middle" class="label">WatsonxLLMAdapter</text>
+        <text x="127" y="552" text-anchor="middle" class="small">ibm-watsonx-ai SDK</text>
+        <text x="127" y="571" text-anchor="middle" class="small">retry / error変換</text>
+
+        <rect x="265" y="500" width="215" height="92" fill="#fff7ed" stroke="#e07b20" />
+        <text x="372" y="530" text-anchor="middle" class="label">WatsonxEmbeddingAdapter</text>
+        <text x="372" y="552" text-anchor="middle" class="small">encode query / passages</text>
+        <text x="372" y="571" text-anchor="middle" class="small">設定dimensionを保持</text>
+
+        <rect x="510" y="500" width="215" height="92" fill="#fff7ed" stroke="#e07b20" />
+        <text x="617" y="530" text-anchor="middle" class="label">ChromaVectorStore</text>
+        <text x="617" y="552" text-anchor="middle" class="small">chromadb / COSINE</text>
+        <text x="617" y="571" text-anchor="middle" class="small">metadata filter</text>
+
+        <rect x="755" y="480" width="225" height="132" fill="#fff7ed" stroke="#e07b20" />
+        <text x="867" y="509" text-anchor="middle" class="label">Ticket Repository実装</text>
+        <text x="867" y="533" text-anchor="middle" class="small">現行: JsonTicketRepository</text>
+        <text x="867" y="553" text-anchor="middle" class="small">data/runtimeへローカル保存</text>
+        <text x="867" y="578" text-anchor="middle" class="tiny">実装切替時もServiceの</text>
+        <text x="867" y="594" text-anchor="middle" class="tiny">interfaceは維持する</text>
+      </g>
+
+      <line x1="160" y1="150" x2="127" y2="241" stroke="#475569" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#umlDependency)" />
+      <line x1="205" y1="150" x2="372" y2="241" stroke="#475569" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#umlDependency)" />
+      <line x1="255" y1="150" x2="617" y2="241" stroke="#475569" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#umlDependency)" />
+      <line x1="795" y1="135" x2="867" y2="241" stroke="#475569" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#umlDependency)" />
+
+      <line x1="127" y1="496" x2="127" y2="349" stroke="#7c3aed" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#umlRealization)" />
+      <line x1="372" y1="496" x2="372" y2="365" stroke="#7c3aed" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#umlRealization)" />
+      <line x1="617" y1="496" x2="617" y2="365" stroke="#7c3aed" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#umlRealization)" />
+      <line x1="867" y1="476" x2="867" y2="365" stroke="#7c3aed" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#umlRealization)" />
+
+      <text x="35" y="655" class="small">依存方向: Service → Port</text>
+      <text x="300" y="655" class="small">実装関係: Adapter --▷ Port</text>
+      <text x="575" y="655" class="small">具体SDK・保存方式はServiceへ漏らさない</text>
+    </svg>
+    <div class="uml-legend">
+      <span><span class="line-sample"></span>依存</span>
+      <span><span class="line-sample dashed"></span>interfaceの実装</span>
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h3>4. UMLシーケンス図（RAG回答下書き）</h3>
+    <p class="diagram-caption">ticket_id指定時はTicketを取得し、認証導入後はサーバー側でscopeを決定する。根拠がない場合はLLMを呼び出さない。</p>
+    <svg class="svg-diagram" viewBox="0 0 1000 700" role="img" aria-label="RAG回答下書き生成のUMLシーケンス図">
+      <defs>
+        <marker id="sequenceArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+          <path d="M0,0 L8,4 L0,8 Z" fill="#334155" />
+        </marker>
+      </defs>
+
+      <g>
+        <rect x="18" y="24" width="120" height="48" rx="6" fill="#f8fafc" stroke="#64748b" />
+        <rect x="180" y="24" width="120" height="48" rx="6" fill="#f8fafc" stroke="#64748b" />
+        <rect x="342" y="24" width="120" height="48" rx="6" fill="#dbeafe" stroke="#3b82d4" />
+        <rect x="504" y="24" width="120" height="48" rx="6" fill="#fff7ed" stroke="#e07b20" />
+        <rect x="666" y="24" width="120" height="48" rx="6" fill="#fff7ed" stroke="#e07b20" />
+        <rect x="828" y="24" width="150" height="48" rx="6" fill="#eff6ff" stroke="#2563eb" />
+        <text x="78" y="54" text-anchor="middle" class="label">利用者</text>
+        <text x="240" y="54" text-anchor="middle" class="label">Browser</text>
+        <text x="402" y="54" text-anchor="middle" class="label">RAG Asset / Service</text>
+        <text x="564" y="54" text-anchor="middle" class="label">Embedding</text>
+        <text x="726" y="54" text-anchor="middle" class="label">Chroma</text>
+        <text x="903" y="46" text-anchor="middle" class="label">watsonx.ai Runtime</text>
+        <text x="903" y="63" text-anchor="middle" class="small">Generation LLM</text>
+      </g>
+
+      <g stroke="#94a3b8" stroke-dasharray="5 5">
+        <line x1="78" y1="72" x2="78" y2="680" />
+        <line x1="240" y1="72" x2="240" y2="680" />
+        <line x1="402" y1="72" x2="402" y2="680" />
+        <line x1="564" y1="72" x2="564" y2="680" />
+        <line x1="726" y1="72" x2="726" y2="680" />
+        <line x1="903" y1="72" x2="903" y2="680" />
+      </g>
+
+      <g stroke="#334155" stroke-width="1.6" marker-end="url(#sequenceArrow)">
+        <line x1="78" y1="110" x2="236" y2="110" />
+        <line x1="240" y1="150" x2="398" y2="150" />
+        <line x1="402" y1="195" x2="560" y2="195" />
+        <line x1="564" y1="235" x2="406" y2="235" stroke-dasharray="5 3" />
+        <line x1="402" y1="275" x2="722" y2="275" />
+        <line x1="726" y1="315" x2="406" y2="315" stroke-dasharray="5 3" />
+      </g>
+      <text x="157" y="102" text-anchor="middle" class="small">回答案を要求</text>
+      <text x="319" y="142" text-anchor="middle" class="small">POST /answers/draft</text>
+      <path d="M402 160 C455 160,455 182,406 182" fill="none" stroke="#334155" stroke-width="1.4" marker-end="url(#sequenceArrow)" />
+      <text x="465" y="176" class="tiny">ticket_id指定時: TicketService.get_ticket()</text>
+      <text x="481" y="187" text-anchor="middle" class="small">encode_query()</text>
+      <text x="481" y="227" text-anchor="middle" class="small">query vector</text>
+      <text x="564" y="267" text-anchor="middle" class="small">COSINE検索 + metadata filter</text>
+      <text x="564" y="307" text-anchor="middle" class="small">許可済みChunk + score</text>
+
+      <rect x="205" y="342" width="755" height="265" rx="6" fill="#fff" stroke="#64748b" stroke-width="1.5" />
+      <rect x="205" y="342" width="150" height="27" fill="#f1f5f9" stroke="#64748b" />
+      <text x="218" y="360" class="small">alt 検索結果による分岐</text>
+      <line x1="205" y1="438" x2="960" y2="438" stroke="#64748b" stroke-dasharray="7 5" />
+      <text x="220" y="389" class="small">[閾値以上の根拠が0件]</text>
+      <path d="M402 398 C455 398,455 424,406 424" fill="none" stroke="#334155" stroke-width="1.5" marker-end="url(#sequenceArrow)" />
+      <text x="462" y="414" class="small">根拠不足responseを構築（LLM未呼出）</text>
+
+      <text x="220" y="462" class="small">[許可済みの根拠あり]</text>
+      <line x1="402" y1="490" x2="899" y2="490" stroke="#334155" stroke-width="1.6" marker-end="url(#sequenceArrow)" />
+      <text x="650" y="482" text-anchor="middle" class="small">Ticket / query + 許可済みChunk</text>
+      <line x1="903" y1="528" x2="406" y2="528" stroke="#334155" stroke-width="1.6" stroke-dasharray="5 3" marker-end="url(#sequenceArrow)" />
+      <text x="650" y="520" text-anchor="middle" class="small">回答JSON + citation_ids</text>
+      <rect x="372" y="548" width="60" height="38" fill="#dbeafe" stroke="#3b82d4" />
+      <path d="M402 548 C350 548,350 586,398 586" fill="none" stroke="#334155" stroke-width="1.5" marker-end="url(#sequenceArrow)" />
+      <text x="445" y="570" class="small">Citation許可リスト検証・サーバー側メタデータ付加</text>
+
+      <line x1="402" y1="630" x2="244" y2="630" stroke="#334155" stroke-width="1.6" marker-end="url(#sequenceArrow)" />
+      <line x1="240" y1="665" x2="82" y2="665" stroke="#334155" stroke-width="1.6" marker-end="url(#sequenceArrow)" />
+      <text x="323" y="622" text-anchor="middle" class="small">DraftAnswerResponse</text>
+      <text x="161" y="657" text-anchor="middle" class="small">人による確認用の回答下書き</text>
+    </svg>
+  </div>
+</section>
+
+<h2 class="internal-heading">RAGサンプルアセット実装構造</h2>
+<p class="internal-note">以下に、現行実装のレイヤーと主要コンポーネントを示す。</p>
+
+<div class="diagram">
+
+
+  <div class="layer layer-browser">
+    <span class="layer-title">Browser</span>
+    <div class="box-row">
+      <div class="box">
+        index.html / style.css / app.js
+        <span class="box-sub">バニラ HTML+CSS+JS。ビルド不要</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-down">↕</div>
+  <div class="arrow-label">HTTP/JSON — /api/v1</div>
+
+
+  <div class="layer layer-app">
+    <span class="layer-title">Delivery / API Runtime — FastAPI main.py</span>
+    <div class="box-row">
+      <div class="box">
+        api/health.py
+        <span class="box-sub">GET /health/live<br />GET /health/ready</span>
+      </div>
+      <div class="box">
+        api/tickets.py
+        <span class="box-sub">GET/POST /tickets<br />GET/PATCH /tickets/{id}</span>
+      </div>
+      <div class="box">
+        api/masters.py
+        <span class="box-sub">GET /masters/{name}</span>
+      </div>
+      <div class="box">
+        api/rag.py
+        <span class="box-sub">POST /search<br />POST /answers/draft<br />POST /llm/generate（開発・接続確認用）</span>
+      </div>
+      <div class="box">
+        Middleware
+        <span class="box-sub">X-Request-ID<br />構造化ログ<br />CORS</span>
+      </div>
+      <div class="box">
+        StaticFiles
+        <span class="box-sub">Frontend HTML 配信</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-down">↕</div>
+
+
+  <div class="layer layer-domain">
+    <span class="layer-title">Domain（現行modelにはHTTP DTO混在）</span>
+    <div class="box-row">
+      <div class="box">
+        domain/models.py
+        <span class="box-sub">Domain: Ticket / SearchResult<br />現行: TicketCreate / DraftAnswerRequest等のHTTP DTOも同居<br />目標: 波及が増えた時点でapi/schemasへ分離</span>
+      </div>
+      <div class="box">
+        domain/errors.py
+        <span class="box-sub">HelpdeskError / NotFoundError<br />ConflictError / ValidationError<br />HTTP status変換はAPI exception handlerで実施</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-down">↕</div>
+
+  <div class="layer layer-application">
+    <span class="layer-title">Application Services</span>
+    <div class="box-row">
+      <div class="box">
+        services/ticket_service.py
+        <span class="box-sub">list / get / create / update<br />Repositoryへ処理を委譲</span>
+      </div>
+      <div class="box">
+        services/rag_service.py
+        <span class="box-sub">MVPのRAG orchestrator<br />検索・閾値・Prompt・生成・解析・引用検証<br />複雑化時のみRetrieval / PromptBuilder / AnswerGenerator / CitationValidatorへ分離</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-down">↕</div>
+
+
+  <div class="layer layer-ports">
+    <span class="layer-title">Application Contracts / Ports</span>
+    <div class="box-row">
+      <div class="box">
+        ports/llm.py
+        <span class="box-sub">LLMPort.generate(messages)<br />→ LLMResult</span>
+      </div>
+      <div class="box">
+        ports/embeddings.py
+        <span class="box-sub">EmbeddingPort<br />.encode_query / .encode_passages<br />.dimension / .provider_name</span>
+      </div>
+      <div class="box">
+        ports/vector_store.py
+        <span class="box-sub">VectorStorePort.search(<br />  query_vector, top_k,<br />  document_types,<br />  min_score, access_scope<br />)<br />→ list[SearchResult]</span>
+      </div>
+      <div class="box">
+        ports/ticket_repository.py
+        <span class="box-sub">TicketRepository<br />list / get / create / update</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-down">↕</div>
+
+
+  <div class="layer layer-adapters">
+    <span class="layer-title">Adapters (Provider 実装)</span>
+
+    <div class="group-title">LLM</div>
+    <div class="box-row">
+      <div class="box">
+        llm_watsonx.py <span class="tag tag-std">標準</span>
+        <span class="box-sub">WatsonxLLMAdapter<br />ibm-watsonx-ai SDK<br />retry (exponential + jitter)</span>
+      </div>
+      <div class="box">
+        llm_openai_compatible.py <span class="tag tag-ext">拡張</span>
+        <span class="box-sub">OpenAICompatibleLLMAdapter<br />httpx</span>
+      </div>
+      <div class="box">
+        llm_mock.py <span class="tag tag-mock">Mock</span>
+        <span class="box-sub">MockLLMAdapter<br />[MOCK] 固定応答 (JSON)</span>
+      </div>
+    </div>
+
+    <div class="group-title">Embedding</div>
+    <div class="box-row">
+      <div class="box">
+        embedding_watsonx.py <span class="tag tag-std">標準</span>
+        <span class="box-sub">WatsonxEmbeddingAdapter<br />ibm-watsonx-ai Embeddings</span>
+      </div>
+      <div class="box">
+        embedding_local.py <span class="tag tag-ext">拡張</span>
+        <span class="box-sub">LocalEmbeddingAdapter<br />sentence-transformers</span>
+      </div>
+      <div class="box">
+        embedding_mock.py <span class="tag tag-mock">Mock</span>
+        <span class="box-sub">MockEmbeddingAdapter<br />SHA-256 ベース決定論的ベクトル</span>
+      </div>
+    </div>
+
+    <div class="group-title">Vector Store</div>
+    <div class="box-row">
+      <div class="box">
+        vector_chroma.py <span class="tag tag-std">標準</span>
+        <span class="box-sub">ChromaVectorStore<br />is_active=true filter<br />access_scope / document_type filter<br />COSINE検索 (chromadb)</span>
+      </div>
+      <div class="box">
+        vector_numpy.py <span class="tag tag-mock">Mock</span>
+        <span class="box-sub">NumpyVectorStore<br />in-memory cosine 検索<br />.npy + chunks.json</span>
+      </div>
+    </div>
+
+    <div class="group-title">Ticket / Master</div>
+    <div class="box-row">
+      <div class="box">
+        ticket_json.py
+        <span class="box-sub">JsonTicketRepository<br />in-memory + atomic JSON 書込<br />version 衝突検出<br />seed_dir / runtime_dir</span>
+      </div>
+      <div class="box">
+        factory.py
+        <span class="box-sub">create_llm(settings)<br />match LLM_PROVIDER</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-down">↕</div>
+
+
+  <div class="layer layer-infra">
+    <span class="layer-title">Infrastructure / External Services</span>
+    <div class="box-row">
+      <div class="box">
+        config.py <span class="tag tag-std">Infrastructure</span>
+        <span class="box-sub">pydantic-settings / provider必須値検証<br />composition rootからService・Adapterへ必要値を注入</span>
+      </div>
+      <div class="box">
+        Watson Machine Learning（watsonx.ai Runtime） <span class="tag tag-std">標準</span>
+        <span class="box-sub">生成 LLM (WATSONX_MODEL_ID)<br />Embedding (WATSONX_EMBEDDING_MODEL_ID)<br />HTTPS / ibm-watsonx-ai SDK</span>
+      </div>
+      <div class="box">
+        watsonx.ai Studio <span class="tag tag-std">申請</span>
+        <span class="box-sub">Project 1件の作成・管理<br />通常のRAGリクエストから直接呼び出さない</span>
+      </div>
+      <div class="box">
+        Cloud Object Storage <span class="tag tag-std">申請</span>
+        <span class="box-sub">watsonx.ai Project関連ストレージ<br />通常のRAGリクエストから直接呼び出さない</span>
+      </div>
+      <div class="box">
+        Local Chroma <span class="tag tag-std">標準</span>
+        <span class="box-sub">Vector DB — COSINE検索<br />is_active / access_scope / document_type filter<br />data/index/chromaへ永続化<br />外部DB接続・クラウド申請不要</span>
+      </div>
+      <div class="box">
+        data/seed/ &amp; data/runtime/
+        <span class="box-sub">tickets.json / masters.json<br />documents.json<br />Docker named volume（名前付きvolume）</span>
+      </div>
+      <div class="box">
+        data/index/
+        <span class="box-sub">chroma/（標準Vector DB）<br />vectors.npy / chunks.json<br />manifest.json (dimension 検証)</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+
+<div class="flow-section">
+  <div class="flow-title">RAG 回答生成フロー（POST /answers/draft）</div>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>処理</th>
+        <th>呼び出し先</th>
+        <th>備考</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>リクエスト検証</td>
+        <td><span class="mono">DraftAnswerRequest</span></td>
+        <td>ticket_id XOR question (oneOf)。両方 / 両方なし → 422</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Ticket 取得 (ticket_id 指定時)</td>
+        <td><span class="mono">TicketService.get_ticket()</span></td>
+        <td>存在しない ID → 404</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Query を Vector 化</td>
+        <td><span class="mono">EmbeddingPort.encode_query()</span></td>
+        <td>標準: WatsonxEmbeddingAdapter / 代替: MockEmbeddingAdapter</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Vector 検索</td>
+        <td><span class="mono">VectorStorePort.search(access_scope)</span></td>
+        <td>Chromaでis_active=trueを適用し、APIでdocument_typesが指定された場合はmetadataで絞り込む。Adapterはaccess_scopeにも対応するが、現行APIからは指定しない。NumPyは接続不要のテスト用</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>スコア閾値フィルタ</td>
+        <td><span class="mono">RagService</span></td>
+        <td>VECTOR_MIN_SCORE 未満を除外。0 件 → LLM を呼ばず insufficient_context 返却</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>Prompt 組み立て</td>
+        <td><span class="mono">RagService</span></td>
+        <td>[S1]…[Sn] allow-list を生成。system + user メッセージ</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>LLM 呼び出し</td>
+        <td><span class="mono">LLMPort.generate(messages)</span></td>
+        <td>標準: WatsonxLLMAdapter (retry 最大 2 回) / 代替: MockLLMAdapter</td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td>JSON パース</td>
+        <td><span class="mono">RagService</span></td>
+        <td>Markdown fence除去とJSON候補抽出を行う。構造化結果を取得できない場合は生成textを要手動確認の回答案として扱う</td>
+      </tr>
+      <tr>
+        <td>9</td>
+        <td>Citation allow-list 検証</td>
+        <td><span class="mono">RagService</span></td>
+        <td>LLM の citation_ids を allow-list で検証。chunk_id / score / source をサーバー側 metadata から付加</td>
+      </tr>
+      <tr>
+        <td>10</td>
+        <td>レスポンス返却</td>
+        <td><span class="mono">DraftAnswerResponse</span></td>
+        <td>needs_human_confirmation=true固定。Provider固有のresponse objectは返さない。JSON解析失敗時は生成textを回答案として返す</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
+<div class="flow-section">
+  <div class="flow-title">API エンドポイント一覧</div>
+  <table>
+    <thead>
+      <tr><th>Method</th><th>Path</th><th>用途</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="verb">GET</span></td><td><span class="mono">/api/v1/health/live</span></td><td>プロセス生存確認（外部 API 呼び出しなし）</td></tr>
+      <tr><td><span class="verb">GET</span></td><td><span class="mono">/api/v1/health/ready</span></td><td>RAGサービスとローカルChromaインデックスの準備状態を確認</td></tr>
+      <tr><td><span class="verb">GET</span></td><td><span class="mono">/api/v1/tickets</span></td><td>Ticket 一覧（カーソルページネーション）</td></tr>
+      <tr><td><span class="verb">POST</span></td><td><span class="mono">/api/v1/tickets</span></td><td>Ticket 作成</td></tr>
+      <tr><td><span class="verb">GET</span></td><td><span class="mono">/api/v1/tickets/{id}</span></td><td>Ticket 詳細</td></tr>
+      <tr><td><span class="verb">PATCH</span></td><td><span class="mono">/api/v1/tickets/{id}</span></td><td>Ticket 更新（version 衝突 → 409）</td></tr>
+      <tr><td><span class="verb">GET</span></td><td><span class="mono">/api/v1/masters/{name}</span></td><td>マスターデータ取得</td></tr>
+      <tr><td><span class="verb">POST</span></td><td><span class="mono">/api/v1/search</span></td><td>ChromaによるVector検索。is_activeを適用し、任意のdocument_typesで絞り込み可能</td></tr>
+      <tr><td><span class="verb">POST</span></td><td><span class="mono">/api/v1/answers/draft</span></td><td>RAG 回答下書き生成（citation に chunk_id + score を付加）</td></tr>
+      <tr><td><span class="verb">POST</span></td><td><span class="mono">/api/v1/llm/generate</span></td><td>開発・接続確認用。共有／本番相当環境では無効化または認証・利用制限が必要</td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#dbeafe;border:1.5px solid #93c5fd"></div>RAG Sample Asset / Delivery Runtime</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ede9fe;border:1.5px solid #c4b5fd"></div>Domain / Services</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#dcfce7;border:1.5px solid #86efac"></div>Ports (Interface)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#fff7ed;border:1.5px solid #fdba74"></div>Adapters (実装)</div>
+  <div class="legend-item"><span class="tag tag-std">クラウド</span>Watson Machine Learning / Studio / Cloud Object Storage</div>
+  <div class="legend-item"><span class="tag tag-std">標準</span>ローカルChroma</div>
+  <div class="legend-item"><span class="tag tag-mock">Mock</span>NumPy / 決定論的Mock（テスト用）</div>
+  <div class="legend-item"><span class="tag tag-ext">拡張</span>OpenAI Compatible / sentence-transformers</div>
+</div>
+
+<footer>Helpdesk RAG サンプルアセット / 構成図 — Vector DBはローカルChroma、生成・Embeddingはwatsonx.aiを利用</footer>
+</body>
+</html>

@@ -186,7 +186,7 @@ data/index/chroma/             Chromaインデックス（自動生成）
 | `POST /api/v1/answers/draft` | 検索結果を使用した回答案生成 |
 | `GET /api/v1/health/ready` | 起動準備状態の確認 |
 
-画面の使い方は[GUI操作ガイド](./docs/GUI_USER_GUIDE.md)、詳細なAPIは起動後の`/docs`を参照してください。
+画面の使い方は[GUI操作ガイド](./Day2開発案内/GUI_USER_GUIDE.md)、詳細なAPIは起動後の`/docs`を参照してください。
 
 ## 6. 開発時の基本操作
 
@@ -227,7 +227,7 @@ uv sync --extra dev
 | `/favicon.ico`が404 | Browserのアイコン要求であり、アプリケーション動作には影響しない |
 | watsonx.ai接続に失敗する | URL、Project ID、モデルIDを確認する。API Keyは画面やログへ出力しない |
 
-Mac／Windows別の補足は[環境構築手順](./docs/環境構築手順_Mac_Windows.md)を参照してください。
+Mac／Windows別の補足は[環境構築手順](./Day2開発案内/環境構築手順_Mac_Windows.md)を参照してください。
 
 ## 8. （オプション）検索文書再構築手順
 
