@@ -1,0 +1,24 @@
+# 認証情報・シークレット
+.env
+.env.*
+!.env.example
+!.env.container.example
+**/secrets.*
+**/credentials.*
+*.pem
+*.key
+*_token
+*_token.txt
+
+# 生成物・依存・大容量
+.venv/
+node_modules/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+data/index/
+*.log
+
+# 実行時データ（個人情報が入りうるもの）
+data/runtime/
