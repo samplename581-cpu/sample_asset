@@ -35,6 +35,9 @@ class SearchResult:
 
 
 class VectorStorePort(Protocol):
+    @property
+    def provider_name(self) -> str: ...
+
     def search(
         self,
         query_vector: np.ndarray,

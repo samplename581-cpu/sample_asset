@@ -21,6 +21,17 @@ class ReadinessResponse(BaseModel):
     checks: dict[str, str]
 
 
+class ProviderInfo(BaseModel):
+    provider: str
+    model: str | None = None
+
+
+class ProvidersResponse(BaseModel):
+    llm: ProviderInfo
+    embedding: ProviderInfo
+    vector_store: ProviderInfo
+
+
 @router.get("/live", response_model=LiveResponse)
 def get_live() -> dict[str, str]:
     return {"status": "ok"}
@@ -59,6 +70,38 @@ def get_ready(
         return {"status": "not_ready", "checks": checks}
 
     return {"status": "ready", "checks": checks}
+
+
+@router.get("/providers", response_model=ProvidersResponse)
+def get_providers(
+    request: Request,
+) -> ProvidersResponse:
+    """実際に動作している接続先（provider名とモデルID）を返す。
+
+    URL・Project ID・API Keyなどの接続情報は返さない。
+    """
+    llm = getattr(request.app.state, "llm", None)
+    rag = getattr(request.app.state, "rag_service", None)
+
+    llm_info = ProviderInfo(
+        provider=str(getattr(llm, "provider", "unavailable")),
+        model=getattr(llm, "model", None),
+    )
+    embedding_info = (
+        ProviderInfo(provider=rag.embedding_provider, model=rag.embedding_model)
+        if rag is not None
+        else ProviderInfo(provider="unavailable")
+    )
+    vector_store_info = (
+        ProviderInfo(provider=rag.vector_store_provider)
+        if rag is not None
+        else ProviderInfo(provider="unavailable")
+    )
+    return ProvidersResponse(
+        llm=llm_info,
+        embedding=embedding_info,
+        vector_store=vector_store_info,
+    )
 
 
 def _check_numpy_index(index_dir: Path, expected_dimension: int) -> str:

@@ -19,6 +19,14 @@ class WatsonxLLMAdapter(LLMPort):
         self._model = model_inference
         self._model_id = model_id
 
+    @property
+    def provider(self) -> str:
+        return "watsonx"
+
+    @property
+    def model(self) -> str:
+        return self._model_id
+
     @classmethod
     def from_settings(cls, settings: Settings) -> WatsonxLLMAdapter:
         try:
@@ -74,7 +82,7 @@ class WatsonxLLMAdapter(LLMPort):
                 return LLMResult(
                     text=response,
                     model=self._model_id,
-                    provider="watsonx",
+                    provider=self.provider,
                     input_tokens=None,
                     output_tokens=None,
                 )

@@ -23,6 +23,10 @@ class ChromaVectorStore:
         self._client = client
         self._collection = collection
 
+    @property
+    def provider_name(self) -> str:
+        return "chroma"
+
     @classmethod
     def from_settings(cls, settings: Settings) -> ChromaVectorStore:
         try:

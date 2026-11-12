@@ -15,6 +15,14 @@ logger = logging.getLogger("helpdesk.adapters.llm_openai_compatible")
 
 
 class OpenAICompatibleLLMAdapter(LLMPort):
+    @property
+    def provider(self) -> str:
+        return "openai_compatible"
+
+    @property
+    def model(self) -> str:
+        return self._model_id
+
     def __init__(
         self,
         client: Any,
@@ -117,7 +125,7 @@ class OpenAICompatibleLLMAdapter(LLMPort):
                 return LLMResult(
                     text=text,
                     model=self._model_id,
-                    provider="openai_compatible",
+                    provider=self.provider,
                     input_tokens=input_tokens,
                     output_tokens=output_tokens,
                 )

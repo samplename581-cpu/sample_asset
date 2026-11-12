@@ -24,6 +24,10 @@ class MilvusVectorStore:
         self._client = client
         self._collection_name = collection_name
 
+    @property
+    def provider_name(self) -> str:
+        return "milvus"
+
     @classmethod
     def from_settings(cls, settings: Settings) -> MilvusVectorStore:
         try:

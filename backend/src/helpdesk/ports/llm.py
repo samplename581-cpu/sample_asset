@@ -20,4 +20,10 @@ class LLMResult:
 
 
 class LLMPort(Protocol):
+    @property
+    def provider(self) -> str: ...
+
+    @property
+    def model(self) -> str: ...
+
     async def generate(self, messages: list[ChatMessage]) -> LLMResult: ...

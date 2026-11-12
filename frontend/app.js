@@ -65,16 +65,59 @@ async function apiFetch(path, options = {}) {
 }
 
 // ── Provider badge ─────────────────────────────────────────────────────────
+// GET /health/providers が返す、実際に動作中の接続先を表示する。
+// LLM と Embedding が同じ provider ならまとめて 1 つ、異なる場合は両方を表示する。
+function setProviderBadge(text, cssClass, title) {
+  providerBadge.textContent = text;
+  providerBadge.className = "badge " + cssClass;
+  providerBadge.title = title || "";
+}
+
+function providerBadgeClass(name) {
+  if (name === "mock") return "badge-mock";
+  if (name === "watsonx") return "badge-watsonx";
+  return "badge-other";
+}
+
+function providerDisplayName(name) {
+  const labels = {
+    mock: "Mock",
+    watsonx: "watsonx.ai",
+    openai_compatible: "OpenAI互換",
+    local: "ローカル",
+    chroma: "Chroma",
+    milvus: "Milvus",
+    numpy: "NumPy",
+    unavailable: "利用不可",
+  };
+  return labels[name] || name;
+}
+
 async function loadProvider() {
   try {
-    // POST to /llm/generate with a trivial prompt to discover provider
-    // Fall back to health check metadata if that endpoint is not exposed
-    const res = await fetch(API_BASE + "/health/live");
-    if (res.ok) {
-      providerBadge.textContent = "Provider: mock";
-      providerBadge.className = "badge badge-mock";
-    }
-  } catch (_) { /* ignore */ }
+    const res = await fetch(API_BASE + "/health/providers");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const p = await res.json();
+    const llm = p.llm.provider;
+    const emb = p.embedding.provider;
+    const llmLabel = providerDisplayName(llm);
+    const embLabel = providerDisplayName(emb);
+    const text = llm === emb
+      ? `接続先: ${llmLabel}`
+      : `LLM: ${llmLabel} / 埋め込み: ${embLabel}`;
+    const title = [
+      `LLM: ${llmLabel} (${p.llm.model || "—"})`,
+      `埋め込み: ${embLabel} (${p.embedding.model || "—"})`,
+      `ベクトルストア: ${providerDisplayName(p.vector_store.provider)}`,
+    ].join("\n");
+    // mock が 1 つでも含まれる場合は、実環境ではないことが分かるよう mock の色にする
+    const cssClass = (llm === "mock" || emb === "mock")
+      ? "badge-mock"
+      : providerBadgeClass(llm);
+    setProviderBadge(text, cssClass, title);
+  } catch (_) {
+    setProviderBadge("接続先を取得できません", "badge-other", "");
+  }
 }
 
 // ── Ticket list ────────────────────────────────────────────────────────────

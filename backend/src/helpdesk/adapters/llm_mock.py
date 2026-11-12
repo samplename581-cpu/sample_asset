@@ -7,7 +7,15 @@ from helpdesk.ports.llm import ChatMessage, LLMPort, LLMResult
 
 class MockLLMAdapter(LLMPort):
     def __init__(self, model: str = "mock-helpdesk-v1") -> None:
-        self.model = model
+        self._model = model
+
+    @property
+    def provider(self) -> str:
+        return "mock"
+
+    @property
+    def model(self) -> str:
+        return self._model
 
     async def generate(self, messages: list[ChatMessage]) -> LLMResult:
         user_content = ""
@@ -29,7 +37,7 @@ class MockLLMAdapter(LLMPort):
         return LLMResult(
             text=json.dumps(payload, ensure_ascii=False),
             model=self.model,
-            provider="mock",
+            provider=self.provider,
             input_tokens=None,
             output_tokens=None,
         )

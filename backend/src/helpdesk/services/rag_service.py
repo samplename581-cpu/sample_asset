@@ -64,6 +64,18 @@ class RagService:
         self._embedding = embedding
         self._store = store
 
+    @property
+    def embedding_provider(self) -> str:
+        return self._embedding.provider_name
+
+    @property
+    def embedding_model(self) -> str:
+        return self._embedding.model_name
+
+    @property
+    def vector_store_provider(self) -> str:
+        return self._store.provider_name
+
     def close(self) -> None:
         """Close optional provider resources without exposing adapter details."""
         for resource in (self._store, self._embedding):

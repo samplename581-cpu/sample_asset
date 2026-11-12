@@ -13,6 +13,10 @@ class NumpyVectorStore:
         self._chunks = chunks
         self._vectors = vectors.astype(np.float32)
 
+    @property
+    def provider_name(self) -> str:
+        return "numpy"
+
     def search(
         self,
         query_vector: np.ndarray,

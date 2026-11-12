@@ -30,6 +30,19 @@ paths:
                 $ref: "#/components/schemas/Readiness"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /health/providers:
+    get:
+      operationId: getProviders
+      tags: [health]
+      summary: 動作中の接続先（LLM / Embedding / Vector Store）を返す
+      description: provider名とモデルIDのみを返す。URL・Project ID・API Keyは返さない。
+      responses:
+        "200":
+          description: Active providers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Providers"
   /tickets:
     get:
       operationId: listTickets
@@ -170,6 +183,19 @@ components:
       required: [status]
       properties:
         status: {type: string, const: ok}
+    ProviderInfo:
+      type: object
+      required: [provider]
+      properties:
+        provider: {type: string, examples: [mock, watsonx, local, openai_compatible, chroma, milvus, unavailable]}
+        model: {type: [string, "null"]}
+    Providers:
+      type: object
+      required: [llm, embedding, vector_store]
+      properties:
+        llm: {$ref: "#/components/schemas/ProviderInfo"}
+        embedding: {$ref: "#/components/schemas/ProviderInfo"}
+        vector_store: {$ref: "#/components/schemas/ProviderInfo"}
     Readiness:
       type: object
       required: [status, checks]

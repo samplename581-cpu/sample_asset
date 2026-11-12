@@ -1,5 +1,13 @@
 # Helpdesk RAG Starter
 
+> **【インターン用コンテンツ】**
+> このリポジトリは、IBMのインターンシップ（FDE体験）で参加者が使用する教材・サンプルアセットです。**インターン参加者向けに作成したものであり、IBMの製品、サービス、公式サンプルではありません。** 内容は予告なく変更・削除することがあります。
+>
+> - 登場する会社名、商品名、人名、注文番号、問い合わせ内容は**すべて架空**です。実在の顧客データは含みません。
+> - 本番環境での利用、実データの投入は想定していません。
+> - 認証情報（API Key、Project IDなど）はこのリポジトリに含まれていません。各自で受け取った値を、自分の`.env`にだけ設定してください。
+> - インターンの参加者以外の方は、参照のみとしてください。サポートは提供していません。
+
 ヘルプデスクの問い合わせに対して、関連文書を検索し、回答案を生成するRAGアプリケーションです。
 
 - Frontend: HTML / CSS / JavaScript
@@ -10,6 +18,62 @@
 最初はAPI Key不要のMock構成で起動します。起動を確認した後、必要に応じてwatsonx.aiへ切り替えてください。
 
 > このアプリケーションはローカル開発用です。`127.0.0.1`のまま起動し、ネットワークへ公開しないでください。
+
+## リポジトリの内容
+
+このリポジトリには、アプリのソースコードに加えて、インターンの進め方を説明する資料と、AIコーディングエージェント（IBM Bob）の設定例が入っています。目的に合う項目を選んで参照してください。
+
+### 目的別の入口
+
+| やりたいこと | 見る場所 |
+|---|---|
+| 開発環境をつくる（Bobのサインインを含む） | [IBMBob開発環境構築手順](./Day2開発案内/IBMBob開発環境構築手順.md) → [環境構築手順（Mac／Windows）](./Day2開発案内/環境構築手順_Mac_Windows.md) |
+| このアプリで何ができるかを知る | [サンプルアセットアプリ紹介](./Day2開発案内/サンプルアセットアプリ紹介.md) |
+| 開発の進め方と考え方を知る | [開発方針](./Day2開発案内/開発方針.pdf)（PPTX版: [開発方針.pptx](./Day2開発案内/開発方針.pptx)） |
+| アプリを起動して動かす | このREADMEの[1. 前提条件](#1-前提条件)〜[3. 起動確認](#3-起動確認)、画面の使い方は[GUI操作ガイド](./Day2開発案内/GUI_USER_GUIDE.md) |
+| AI駆動開発とIBM Bobの使い方を学ぶ | [Day3講座資料](./Day3開発案内/Day3_AI駆動開発とIBMBob講座.pptx) |
+| 業務観察で作ったソリューション案を、Bobと一緒に具体化する | [FDE開発キット](./fde_bob_kit/README.md) |
+| アプリを改造・拡張する | このREADMEの[5. アプリケーション構成](#5-アプリケーション構成)と[8. 検索文書再構築手順](#8-オプション検索文書再構築手順) |
+| 検索対象の文書やデータを差し替える | `assets/source/business_tools/`（Excelの正本）と`data/seed/`（生成されるJSON） |
+
+### フォルダの構成
+
+```text
+sample_asset/
+├── README.md               このファイル（概要・セットアップ）
+├── Day2開発案内/            環境構築・アプリ紹介・開発方針・GUI操作ガイド・画面イメージ（helpdesk-rag.html）
+├── Day3開発案内/            AI駆動開発とIBM Bobの講座資料（PPTX）
+├── fde_bob_kit/            Bob用のスキル・カスタムモードの例と、導入手順
+├── backend/                サーバー側（Python / FastAPI）
+│   ├── src/helpdesk/         アプリ本体（api / services / ports / adapters / domain）
+│   ├── scripts/              インデックス構築、Excel取り込みのスクリプト
+│   └── tests/                テスト（unit / integration / contract）
+├── frontend/               画面（HTML / CSS / JavaScript）
+├── openapi/                API仕様（helpdesk-api.yaml）
+├── assets/source/business_tools/  架空の業務ツール（FAQ回答集、分類基準表、問い合わせ管理シート、問い合わせフォーム）
+├── data/seed/              検索文書・チケット・マスタの初期データ（Excelから生成）
+├── picture/                環境構築手順で使う画面キャプチャ
+├── pyproject.toml, uv.lock 依存関係（uvで管理）
+├── Makefile                開発用コマンドの短縮
+├── .env.example            設定の見本（秘密値は空。実際の値は`.env`に書き、Gitに登録しない）
+└── Dockerfile, compose.yaml  任意の発展構成（初回は不要）
+```
+
+### 想定している進め方
+
+1. **環境構築**: Bobをインストールし、サインインする。リポジトリをCloneして、Mockで起動する。
+2. **業務観察**: 架空の問い合わせ業務を観察し、課題を見つける。
+3. **ソリューション案づくり**: 課題を解く案を考え、評価して絞り込む。
+4. **開発**: Bobを使って、サンプルアセットを土台に（または別の構成で）アプリをつくる。
+5. **定着と振り返り**: 現場で使われ続ける形にし、学びをまとめる。
+
+> サンプルアセットの利用は必須ではありません。グループの案に合う部分だけを使い、合わない場合は別の構成・言語を選んでかまいません。
+
+### 扱いの注意
+
+- **GitHub Enterprise上で参加者に共有するリポジトリです。** 社内の情報、実在の個人情報、認証情報を、コミット・Issue・Pull Requestに書かないでください。
+- 資料（`Day2開発案内/`、`Day3開発案内/`）には、IBM社内でのみ開けるリンクが含まれる場合があります。参加者以外は開けません。
+- ライセンスは設定していません。インターン以外での再利用や再配布は、想定していません。
 
 ## 1. 前提条件
 
@@ -29,7 +93,7 @@ Python、uv、Docker、Node.jsの事前インストールは不要です。セ�
 
 ### macOS（Terminal）
 
-repositoryの画面にある「Code」からClone URLを取得し、次の`<repository-url>`へ指定します。
+次のコマンドでrepositoryをCloneします。
 
 ```bash
 git clone https://github.ibm.com/Shin-Sakamoto1/sample_asset.git ~/sample_asset
@@ -50,12 +114,12 @@ uv run uvicorn helpdesk.main:app --app-dir backend/src --host 127.0.0.1 --port 8
 
 ### Windows（PowerShell）
 
-repositoryの画面にある「Code」からClone URLを取得し、次の`<repository-url>`へ指定します。
+次のコマンドでrepositoryをCloneします。
 
 > ChromaのファイルをOneDriveが同期すると、インデックス構築時に`WinError 5`が発生することがあります。OneDrive配下ではなく、`C:\work\sample_asset`のような短いローカルパスを使用してください。
 
 ```powershell
-git clone <repository-url> C:\work\sample_asset
+git clone https://github.ibm.com/Shin-Sakamoto1/sample_asset.git C:\work\sample_asset
 Set-Location C:\work\sample_asset
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
@@ -185,6 +249,7 @@ data/index/chroma/             Chromaインデックス（自動生成）
 | `POST /api/v1/search` | 関連文書のVector検索 |
 | `POST /api/v1/answers/draft` | 検索結果を使用した回答案生成 |
 | `GET /api/v1/health/ready` | 起動準備状態の確認 |
+| `GET /api/v1/health/providers` | 動作中の接続先（LLM・埋め込み・ベクトルストア）の確認。画面右上の接続先バッジはこの値を表示する |
 
 画面の使い方は[GUI操作ガイド](./Day2開発案内/GUI_USER_GUIDE.md)、詳細なAPIは起動後の`/docs`を参照してください。
 
