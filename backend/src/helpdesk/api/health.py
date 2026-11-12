@@ -53,8 +53,8 @@ def get_ready(
     checks["runtime_dir"] = "ok" if runtime_dir.exists() else "missing"
     checks["seed_tickets"] = "ok" if (seed_dir / settings.TICKET_SEED_FILE).exists() else "missing"
 
-    if settings.VECTOR_STORE_PROVIDER in ("chroma", "milvus"):
-        # DB-backed stores: rag_service が起動時に接続・検証済みであることを確認する
+    if settings.VECTOR_STORE_PROVIDER == "chroma":
+        # Chroma: rag_service が起動時にコレクションを開いて検証済みであることを確認する
         checks["rag_service"] = (
             "ok" if getattr(request.app.state, "rag_service", None) is not None else "unavailable"
         )

@@ -64,14 +64,3 @@ def test_watsonx_embedding_requires_model_id() -> None:
         )
 
 
-def test_milvus_requires_connection_settings() -> None:
-    """Milvus選択時はURI、username、passwordを必須にすること。"""
-    from helpdesk.config import Settings
-
-    with pytest.raises(ValidationError, match="MILVUS_URI"):
-        Settings(
-            VECTOR_STORE_PROVIDER="milvus",
-            MILVUS_URI=None,
-            MILVUS_USERNAME=None,
-            MILVUS_PASSWORD=None,
-        )

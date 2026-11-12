@@ -7,7 +7,7 @@
 | 方式 | 位置付け | 必要なもの |
 |---|---|---|
 | Python直接実行 + Chroma | 標準・推奨 | uv。Mock確認時はIBM Cloud接続情報不要 |
-| Docker／Podman Compose | 任意のMilvus発展構成 | Docker DesktopまたはPodman Desktop |
+| Docker／Podman Compose | 任意のコンテナ実行（ローカルのみ） | Docker DesktopまたはPodman Desktop |
 | Mock／NumPy | test用fallback | IBM Cloud接続情報なし |
 
 ## 2. 使用するPython version
@@ -216,7 +216,13 @@ Mac／Windowsともに次をすべて満たすこと。
 
 ## 6. 任意のコンテナ実行
 
-Python直接実行ができる場合、Docker／Podmanは必須ではない。利用する場合だけ次を実施する。
+Python直接実行ができる場合、Docker／Podmanは必須ではない。ローカルでの任意の拡張であり、クラウドへのデプロイは行わない。利用する場合だけ次を実施する。
+
+先にホストでインデックスを作成する。コンテナは`data/index`をマウントして使う。
+
+```bash
+uv run python backend/scripts/build_index.py
+```
 
 Docker:
 

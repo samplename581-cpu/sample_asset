@@ -86,24 +86,6 @@ def _load_rag_service(settings: Any) -> RagService | None:
             )
             return None
 
-    if settings.VECTOR_STORE_PROVIDER == "milvus":
-        try:
-            from helpdesk.adapters.vector_milvus import MilvusVectorStore
-
-            milvus_store = MilvusVectorStore.from_settings(settings)
-            logger.info(
-                "RAG service connected to watsonx.data Milvus: collection=%s rows=%d",
-                settings.MILVUS_COLLECTION,
-                milvus_store.count(),
-            )
-            return RagService(embedding=embedding, store=milvus_store)
-        except Exception as exc:
-            logger.error(
-                "Failed to connect to watsonx.data Milvus: error_type=%s",
-                exc.__class__.__name__,
-            )
-            return None
-
     if settings.VECTOR_STORE_PROVIDER != "numpy":
         logger.error("Unsupported VECTOR_STORE_PROVIDER: %s", settings.VECTOR_STORE_PROVIDER)
         return None

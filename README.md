@@ -56,7 +56,7 @@ sample_asset/
 ├── pyproject.toml, uv.lock 依存関係（uvで管理）
 ├── Makefile                開発用コマンドの短縮
 ├── .env.example            設定の見本（秘密値は空。実際の値は`.env`に書き、Gitに登録しない）
-└── Dockerfile, compose.yaml  任意の発展構成（初回は不要）
+└── Dockerfile, compose.yaml  任意のローカルコンテナ実行（初回は不要）
 ```
 
 ### 想定している進め方
@@ -357,8 +357,22 @@ uv run uvicorn helpdesk.main:app --app-dir backend/src --host 127.0.0.1 --port 8
 
 ## 9. （オプション）拡張構成
 
-- Docker／Podman: `Dockerfile`と`compose.yaml`
-- IBM Cloud Milvus: `.env.container.example`
+- Docker／Podman（ローカルのみ）: `Dockerfile`と`compose.yaml`。クラウドへのデプロイは想定していません。
 - ローカルEmbedding: `uv sync --extra local-embedding`
 
-これらは初回セットアップには不要です。
+これらは初回セットアップには不要です。基本はPythonでの直接実行です。
+
+### コンテナで実行する場合（任意）
+
+ホストでインデックスを作成してから、そのディレクトリをコンテナへマウントします。`.env`は`uv run`と同じものを使います。
+
+```bash
+uv run python backend/scripts/build_index.py   # data/indexを作成
+docker compose up --build -d                   # Podmanの場合は podman compose
+docker compose logs -f app
+docker compose down
+```
+
+- 起動後は`http://127.0.0.1:8000`で開きます（`127.0.0.1`のみに公開します）。
+- `data/index/`は書き込み可能でマウントします。Chromaは検索時にもSQLiteへ書き込むためです。それ以外の場所は読み取り専用です。
+- `.env`の`LLM_PROVIDER`と`EMBEDDING_PROVIDER`の設定に従います。インデックス作成時と同じEmbedding設定で起動してください。

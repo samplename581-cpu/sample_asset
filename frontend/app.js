@@ -86,7 +86,6 @@ function providerDisplayName(name) {
     openai_compatible: "OpenAI互換",
     local: "ローカル",
     chroma: "Chroma",
-    milvus: "Milvus",
     numpy: "NumPy",
     unavailable: "利用不可",
   };

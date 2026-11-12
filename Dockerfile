@@ -15,7 +15,7 @@ COPY backend/src ./backend/src
 COPY frontend ./frontend
 COPY data/seed ./data/seed
 
-RUN uv sync --frozen --no-dev --extra watsonx --extra milvus \
+RUN uv sync --frozen --no-dev --extra watsonx \
     && mkdir -p /app/data/runtime \
     && chown -R app:app /app/data/runtime
 

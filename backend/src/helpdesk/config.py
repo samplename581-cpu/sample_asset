@@ -45,13 +45,6 @@ class Settings(BaseSettings):
 
     CHROMA_COLLECTION: str = "helpdesk_knowledge"
 
-    MILVUS_URI: str | None = None
-    MILVUS_USERNAME: str | None = None
-    MILVUS_PASSWORD: str | None = None
-    MILVUS_DATABASE: str = "default"
-    MILVUS_COLLECTION: str = "helpdesk_knowledge"
-    MILVUS_TLS: bool = True
-
     SEED_DATA_DIR: str = "./data/seed"
     # 画面とAPIで使用する初期Ticket
     TICKET_SEED_FILE: str = "tickets_app.json"
@@ -96,18 +89,6 @@ class Settings(BaseSettings):
                 missing.append("WATSONX_EMBEDDING_MODEL_ID")
             if missing:
                 raise ValueError("watsonx provider settings are incomplete: " + ", ".join(missing))
-        if self.VECTOR_STORE_PROVIDER == "milvus":
-            missing = [
-                name
-                for name, value in (
-                    ("MILVUS_URI", self.MILVUS_URI),
-                    ("MILVUS_USERNAME", self.MILVUS_USERNAME),
-                    ("MILVUS_PASSWORD", self.MILVUS_PASSWORD),
-                )
-                if not value
-            ]
-            if missing:
-                raise ValueError("Milvus settings are incomplete: " + ", ".join(missing))
         return self
 
 

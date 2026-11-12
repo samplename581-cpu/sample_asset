@@ -187,7 +187,7 @@ components:
       type: object
       required: [provider]
       properties:
-        provider: {type: string, examples: [mock, watsonx, local, openai_compatible, chroma, milvus, unavailable]}
+        provider: {type: string, examples: [mock, watsonx, local, openai_compatible, chroma, numpy, unavailable]}
         model: {type: [string, "null"]}
     Providers:
       type: object
