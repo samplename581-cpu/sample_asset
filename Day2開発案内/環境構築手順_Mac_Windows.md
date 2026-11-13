@@ -29,6 +29,7 @@
 | Port | localhostのTCP 8000番が利用可能であること |
 
 Python、uv、Docker／Podman、Node.jsは事前導入不要である。Python 3.14とuvは本手順内で導入し、Docker／Podmanは任意の発展構成でのみ使用する。
+Gitのアカウント作成やIBM Bob trial用に複数のメールアドドレスの作成が推奨。
 
 ### 3.2 ネットワーク
 
@@ -39,7 +40,6 @@ Python、uv、Docker／Podman、Node.jsは事前導入不要である。Python 3
 - `https://pypi.org`および`https://files.pythonhosted.org`（Python依存関係）
 - `https://jp-tok.ml.cloud.ibm.com`（watsonx.ai利用時のみ）
 
-組織Proxy、SSL inspection、PowerShell実行制限がある場合は、セットアップ前に利用環境の管理者へ確認する。
 
 ### 3.3 watsonx.ai利用時に必要な情報
 
@@ -73,6 +73,8 @@ Git repositoryをCloneする場合:
 git clone https://github.ibm.com/Shin-Sakamoto1/sample_asset.git sample_asset
 cd sample_asset
 ```
+
+Clone後のブランチ作成、コミット、マージ、Pull Requestは、repositoryの[Gitを使う理由と作業手順](../README.md#62-gitを使う理由)を参照する。
 
 ZIPの場合はFinderまたは`unzip sample_asset.zip`で展開し、`sample_asset`へ移動する。アプリケーション、Seed、元Excelはすべてこのディレクトリ内にある。
 
@@ -141,6 +143,8 @@ git clone https://github.ibm.com/Shin-Sakamoto1/sample_asset.git C:\work\sample_
 Set-Location C:\work\sample_asset
 ```
 
+Clone後のブランチ作成、コミット、マージ、Pull Requestは、repositoryの[Gitを使う理由と作業手順](../README.md#62-gitを使う理由)を参照する。
+
 ZIPの場合は`C:\work\sample_asset`へ展開して同じディレクトリへ移動する。
 
 ### 5.2 uvの導入
@@ -197,7 +201,7 @@ uv run python backend/scripts/build_index.py
 uv run uvicorn helpdesk.main:app --app-dir backend/src --host 127.0.0.1 --port 8000
 ```
 
-`.env`は利用者本人と必要な管理者だけが読める場所に置く。確認:
+`.env`は利用者本人だけが読める場所に置く。確認:
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8000/api/v1/health/live
@@ -279,3 +283,25 @@ podman compose up --build -d
 - [uv installation](https://docs.astral.sh/uv/getting-started/installation/)
 - [uv Python installation](https://docs.astral.sh/uv/guides/install-python/)
 - [Podman installation](https://podman.io/docs/installation)
+
+## 11. 用語の補足
+
+| 用語 | 簡単な説明 |
+|---|---|
+| Shell／Terminal／PowerShell | OSへ文字で命令を入力する環境。TerminalはmacOS、PowerShellはWindowsで主に使用する。 |
+| Repository／Clone | Repositoryはコードの保管場所、Cloneはその内容をPCへ複製する操作。 |
+| Path／PATH | Pathはファイルやフォルダーの場所、PATHはコマンドを探すフォルダーの一覧を表す環境変数。 |
+| `uv` | Python本体、依存ライブラリ、仮想環境、コマンド実行をまとめて管理するツール。 |
+| 依存関係 | アプリを動かすために必要な外部ライブラリと、そのバージョンの組み合わせ。 |
+| `.env`／環境変数 | 環境ごとに変わる設定をコードと分けて管理する仕組み。秘密情報を含む`.env`は共有しない。 |
+| Mock | 本物の外部サービスを呼ばず、疑似結果で動作確認するための代替実装。 |
+| Chroma／Vector DB | 文章を数値化したデータを保存し、意味の近い文書を検索するデータベース。 |
+| Embedding | 文章の意味を、類似検索に使える数値の並びへ変換する処理。 |
+| Seed／インデックス | Seedは初期データ、インデックスはそのデータを検索しやすい形へ整理したもの。 |
+| localhost／Port | localhostは自分のPC、Portは同じPC上のサービスを見分ける番号。 |
+| TCP／HTTPS | TCPは通信データを確実に届ける基本方式、HTTPSは通信内容を暗号化したWeb通信。 |
+| API Key／Project ID／Model ID | API Keyは秘密の認証情報、Project IDは利用先プロジェクト、Model IDは使用するAIモデルを識別する値。 |
+| HTTP 200／401／403／404／503 | 200は成功、401は認証失敗、403は権限不足、404は対象なし、503はサービスの準備不足を示す。 |
+| コンテナ／Compose／マウント | コンテナは分離した実行環境、Composeは複数のコンテナ設定をまとめる仕組み、マウントはホストのファイルをコンテナから使う設定。 |
+| Proxy／Firewall／Outbound | Proxyは通信の中継、Firewallは通信の許可・遮断、OutboundはPCから外部へ向かう通信。 |
+| Process | OS上で実行中のプログラムの単位。複数Processから同じデータを更新すると競合することがある。 |
