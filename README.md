@@ -71,7 +71,7 @@ sample_asset/
 
 ### 扱いの注意
 
-- **GitHub Enterprise上で参加者に共有するリポジトリです。** 社内の情報、実在の個人情報、認証情報を、コミット・Issue・Pull Requestに書かないでください。
+- **GitHub上で参加者に共有するリポジトリです。** 社内の情報、実在の個人情報、認証情報を、コミット・Issue・Pull Requestに書かないでください。
 - 資料（`Day2開発案内/`、`Day3開発案内/`）には、IBM社内でのみ開けるリンクが含まれる場合があります。参加者以外は開けません。
 - ライセンスは設定していません。インターン以外での再利用や再配布は、想定していません。
 
@@ -96,7 +96,7 @@ Python、uv、Docker、Node.jsの事前インストールは不要です。セ�
 次のコマンドでrepositoryをCloneします。
 
 ```bash
-git clone https://github.ibm.com/Shin-Sakamoto1/sample_asset.git ~/sample_asset
+git clone https://github.com/samplename581-cpu/sample_asset.git ~/sample_asset
 cd ~/sample_asset
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
@@ -119,7 +119,7 @@ uv run uvicorn helpdesk.main:app --app-dir backend/src --host 127.0.0.1 --port 8
 > ChromaのファイルをOneDriveが同期すると、インデックス構築時に`WinError 5`が発生することがあります。OneDrive配下ではなく、`C:\work\sample_asset`のような短いローカルパスを使用してください。
 
 ```powershell
-git clone https://github.ibm.com/Shin-Sakamoto1/sample_asset.git C:\work\sample_asset
+git clone https://github.com/samplename581-cpu/sample_asset.git C:\work\sample_asset
 Set-Location C:\work\sample_asset
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```

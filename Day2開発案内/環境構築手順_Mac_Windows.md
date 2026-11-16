@@ -70,7 +70,7 @@ Mock + Chromaの初回起動は30～90分、トラブル対応を含めて2時�
 Git repositoryをCloneする場合:
 
 ```bash
-git clone https://github.ibm.com/Shin-Sakamoto1/sample_asset.git sample_asset
+git clone https://github.com/samplename581-cpu/sample_asset.git sample_asset
 cd sample_asset
 ```
 
@@ -139,7 +139,7 @@ Git repositoryをCloneするか、Explorerで`sample_asset.zip`の「すべて�
 Cloneする場合はPowerShellで実行する。
 
 ```powershell
-git clone https://github.ibm.com/Shin-Sakamoto1/sample_asset.git C:\work\sample_asset
+git clone https://github.com/samplename581-cpu/sample_asset.git C:\work\sample_asset
 Set-Location C:\work\sample_asset
 ```
 
