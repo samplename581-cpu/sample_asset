@@ -29,7 +29,7 @@
 | Port | localhostのTCP 8000番が利用可能であること |
 
 Python、uv、Docker／Podman、Node.jsは事前導入不要である。Python 3.14とuvは本手順内で導入し、Docker／Podmanは任意の発展構成でのみ使用する。
-Gitのアカウント作成やIBM Bob trial用に複数のメールアドドレスの作成が推奨。
+ブランチのPushとPull Requestを行う参加者は、個人のGitHubアカウントとリポジトリへの書き込み権限を準備する。手順は[IBM Bob開発環境構築手順](./IBMBob開発環境構築手順.md#21-githubアカウントと書き込み権限を準備する)を参照する。
 
 ### 3.2 ネットワーク
 

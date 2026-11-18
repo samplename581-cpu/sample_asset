@@ -57,13 +57,13 @@
 
 ### C. IBM 製品・クラウドリソース
 
-自分で用意できないものは、状態を「要依頼」にして運営へ依頼する。
+自分で用意できないものは、状態を「要依頼」にしてインターン運営へ依頼する。
 
 | リソース | 受け取るもの | 配置先 |
 |---|---|---|
 | watsonx.ai | URL、Project ID、API Key、生成モデル ID、Embedding モデル ID と出力次元 | `.env`（コードは `adapters/`） |
 | Cloud Object Storage、Db2 など | 接続情報 | `.env`（コードは `adapters/`） |
-| watsonx Orchestrate | 利用環境と権限 | 運営に確認 |
+| watsonx Orchestrate | 利用環境と権限 | インターン運営に確認 |
 
 ## 3. チェックリスト
 

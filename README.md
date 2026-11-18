@@ -31,7 +31,6 @@
 | このアプリで何ができるかを知る | [サンプルアセットアプリ紹介](./Day2開発案内/サンプルアセットアプリ紹介.md) |
 | 開発の進め方と考え方を知る | [開発方針](./Day2開発案内/開発方針.pdf)（PPTX版: [開発方針.pptx](./Day2開発案内/開発方針.pptx)） |
 | アプリを起動して動かす | このREADMEの[1. 前提条件](#1-前提条件)〜[3. 起動確認](#3-起動確認)、画面の使い方は[GUI操作ガイド](./Day2開発案内/GUI_USER_GUIDE.md) |
-| AI駆動開発とIBM Bobの使い方を学ぶ | [Day3講座資料](./Day3開発案内/Day3_AI駆動開発とIBMBob講座.pptx) |
 | 業務観察で作ったソリューション案を、Bobと一緒に具体化する | [FDE開発キット](./fde_bob_kit/README.md) |
 | アプリを改造・拡張する | このREADMEの[5. アプリケーション構成](#5-アプリケーション構成)と[8. 検索文書再構築手順](#8-オプション検索文書再構築手順) |
 | 検索対象の文書やデータを差し替える | `assets/source/business_tools/`（Excelの正本）と`data/seed/`（生成されるJSON） |
@@ -42,7 +41,6 @@
 sample_asset/
 ├── README.md               このファイル（概要・セットアップ）
 ├── Day2開発案内/            環境構築・アプリ紹介・開発方針・GUI操作ガイド・画面イメージ（helpdesk-rag.html）
-├── Day3開発案内/            AI駆動開発とIBM Bobの講座資料（PPTX）
 ├── fde_bob_kit/            Bob用のスキル・カスタムモードの例と、導入手順
 ├── backend/                サーバー側（Python / FastAPI）
 │   ├── src/helpdesk/         アプリ本体（api / services / ports / adapters / domain）
@@ -72,7 +70,7 @@ sample_asset/
 ### 扱いの注意
 
 - **GitHub上で参加者に共有するリポジトリです。** 社内の情報、実在の個人情報、認証情報を、コミット・Issue・Pull Requestに書かないでください。
-- 資料（`Day2開発案内/`、`Day3開発案内/`）には、IBM社内でのみ開けるリンクが含まれる場合があります。参加者以外は開けません。
+- `Day2開発案内/`の資料には、IBM社内でのみ開けるリンクが含まれる場合があります。参加者以外は開けません。
 - ライセンスは設定していません。インターン以外での再利用や再配布は、想定していません。
 
 ## 1. 前提条件
@@ -82,6 +80,7 @@ sample_asset/
 | OS | macOS、または64bit Windows 11 |
 | Terminal | macOS Terminal、またはWindows PowerShell |
 | Git／ZIP | GitでCloneできること。Gitを使わない場合はZIPを展開できること |
+| GitHubアカウント | ブランチのPushとPull Requestを行う参加者は、個人のGitHubアカウントと書き込み権限が必要。準備方法は[Bob環境構築手順](./Day2開発案内/IBMBob開発環境構築手順.md#21-githubアカウントと書き込み権限を準備する)を参照 |
 | Browser | Chrome、Edge、Firefox、Safariのいずれか |
 | Network | Git repository、`astral.sh`、PyPIへHTTPS接続できること |
 | PC | 空き容量2GB以上、メモリ4GB以上 |
@@ -187,7 +186,7 @@ Invoke-RestMethod http://127.0.0.1:8000/api/v1/health/ready
 
 ## 4. watsonx.aiへの切り替え
 
-watsonx.aiを利用する場合は、インターン運営者から次の値を受け取ってください。
+watsonx.aiを利用する場合は、インターン運営から次の値を受け取ってください。
 
 - Project ID
 - IBM Cloud API Key
@@ -298,6 +297,8 @@ Gitは、ファイルを共有するだけでなく、誰が何を変更した�
 - `.env`、API Key、パスワード、個人情報、実在の顧客情報、不要な生成物をコミットしない
 - `main`への取り込みは、原則としてPull Requestとレビューを通して行う
 
+> **作業開始・終了時のルール**: 最初の変更を始める前に、最新の`main`から作業用ブランチを作成してください。`main`へ直接コミット・Pushしてはいけません。各日の業務終了時には、作業用ブランチで変更を確認し、必要なテストを実行してからCommitし、同じブランチをGitHubへPushしてください。
+
 ### 6.3 最小のGit作業手順
 
 以下は、`feature/search-filter`という作業ブランチを作る例です。ブランチ名は、`feature/機能名`または`fix/修正内容`のように、目的が分かる短い英数字にします。
@@ -372,13 +373,28 @@ git merge origin/main
 
 解決方針が分からない場合は、無理に進めず`git merge --abort`でマージ開始前へ戻し、チームへ確認します。
 
-#### 5. ブランチをGitHubへ送る
+#### 5. ブランチをGitHubへ送り、業務終了時にも更新する
 
 ```bash
 git push -u origin feature/search-filter
 ```
 
 `push`はローカルのコミットをGitHubへ送る操作です。`-u`を最初の1回だけ付けると、次回から同じブランチでは`git push`だけで送れます。
+
+各日の業務終了時は、`main`ではなく作業用ブランチにいることを確認し、その日の変更をCommitしてPushします。
+
+```bash
+git status
+git diff
+# make test、make lint、make typecheckなど、変更に必要な確認を実行する
+git add frontend/app.js
+git add backend/tests/test_api.py
+git diff --staged
+git commit -m "feat: update ticket search"
+git push
+```
+
+未完成の作業がある場合も、秘密情報や動作を壊す変更を含めていないことを確認し、現在の状態と未完了事項をチームへ共有してください。初回Pushがまだの場合は、`git push`ではなく`git push -u origin <作業ブランチ名>`を実行します。
 
 ### 6.4 Pull Requestを作成してマージする
 
@@ -420,7 +436,7 @@ git pull --ff-only origin main
 git branch -d feature/search-filter
 ```
 
-秘密情報を誤ってコミットした場合は、履歴から見えなくするだけでは不十分です。直ちにチームと管理者へ連絡し、API Keyやパスワードを失効・再発行してください。
+秘密情報を誤ってコミットした場合は、履歴から見えなくするだけでは不十分です。直ちにチームとインターン運営へ連絡し、API Keyやパスワードを失効・再発行してください。
 
 ## 7. トラブルシューティング
 
