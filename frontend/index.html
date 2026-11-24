@@ -4,36 +4,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Helpdesk Support</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=7" />
 </head>
 <body>
   <header class="topbar">
     <span class="app-title">Helpdesk Support</span>
-    <span>
-      <button id="btnNewInquiry" class="btn-secondary">＋ 新規問い合わせ</button>
-      <span id="providerBadge" class="badge badge-other">接続先を確認中…</span>
+    <span class="topbar-right">
+      <span id="providerBadge" class="provider">接続先を確認中</span>
+      <button id="btnNewInquiry" class="btn-secondary" type="button">新規問い合わせ</button>
     </span>
   </header>
 
   <div class="layout">
     <!-- 左ペイン: Ticket一覧 -->
     <aside class="pane-left">
-      <div class="filter-row">
-        <input id="filterStatus" type="text" placeholder="ステータスで絞り込み" />
-        <button id="btnFilter">絞り込み</button>
-      </div>
+      <div id="statusTabs" class="status-tabs" role="tablist" aria-label="ステータスで絞り込み"></div>
       <ul id="ticketList" class="ticket-list">
-        <li class="placeholder">読み込み中…</li>
+        <li class="placeholder">読み込み中</li>
       </ul>
-      <div class="pagination-row">
-        <button id="btnLoadMore" disabled>さらに読み込む</button>
-      </div>
     </aside>
 
     <!-- 右ペイン: Ticket詳細 + RAG -->
     <main class="pane-right" id="detailPane">
       <div id="noSelection" class="no-selection">
-        <p>左の一覧からチケットを選択してください</p>
+        <p>左の一覧から問い合わせを選択してください</p>
       </div>
 
       <!-- 問い合わせフォーム -->
@@ -84,54 +78,110 @@
         </div>
       </section>
 
-      <div id="ticketDetail" class="hidden">
-        <section class="detail-header">
+      <div id="ticketDetail" class="hidden detail">
+        <div class="detail-header">
           <span id="detailId" class="ticket-id"></span>
-          <span id="detailStatus" class="status-badge"></span>
+          <div id="statusSwitch" class="status-switch" role="radiogroup" aria-label="ステータスを変更"></div>
+          <span id="detailPriority" class="prio"></span>
+          <span id="detailReceived" class="received"></span>
+        </div>
+        <h1 id="detailTitle" class="detail-title"></h1>
+
+        <section class="card">
+          <div class="who">
+            <span>お客様 <strong id="detailCustomer"></strong></span>
+            <span>商品 <strong id="detailProduct"></strong></span>
+            <span>注文番号 <strong id="detailOrder"></strong></span>
+          </div>
+          <p id="detailDesc" class="description"></p>
+          <div id="detailPhotos" class="photos hidden"></div>
+          <p id="photoNote" class="muted hidden">写真あり（このチケットでは表示できません。メールで確認してください）</p>
         </section>
-        <h2 id="detailTitle"></h2>
-        <p id="detailMeta" class="meta-text"></p>
-        <p id="detailDesc" class="description"></p>
+
+        <!-- 関連文書（FAQ・分類基準）。開いた時点で表示する -->
+        <section class="card" aria-labelledby="relatedTitle">
+          <div class="card-head">
+            <h2 id="relatedTitle">関連する FAQ・分類基準</h2>
+          </div>
+          <ul id="relatedList" class="source-list"></ul>
+          <p id="relatedStatus" class="muted" aria-live="polite"></p>
+        </section>
+
+        <!-- 類似検索（回答案の生成とは別。開いた時点で表示する） -->
+        <section class="card" aria-labelledby="similarTitle">
+          <div class="card-head">
+            <h2 id="similarTitle">似た過去の問い合わせ</h2>
+          </div>
+          <p id="similarNote" class="note hidden"></p>
+          <ul id="similarList" class="similar-list"></ul>
+          <p id="similarEmpty" class="muted">過去データとの連携後に、ここに似た過去の問い合わせが表示されます。</p>
+        </section>
 
         <div class="action-row">
-          <button id="btnSearch" class="btn-secondary">🔍 関連文書を検索</button>
-          <button id="btnDraft" class="btn-primary">✏️ 回答案を作成</button>
+          <button id="btnDraft" class="btn-primary btn-large" type="button">回答案を作成</button>
+        </div>
+        <div id="loadingBox" class="loading-box hidden" aria-live="polite">関連する資料を探して、回答案を作成しています</div>
+
+        <div id="draftSection" class="hidden draft-area">
+          <section class="card card-ai" aria-labelledby="aiTitle">
+            <div class="ai-head">
+              <h2 id="aiTitle">AIの判断</h2>
+              <span>確定ではありません。内容を確認してから適用してください</span>
+            </div>
+            <div class="ai-body">
+              <div class="ai-row">
+                <span class="ai-label">対応</span>
+                <span id="aiHandling" class="ai-handling"></span>
+              </div>
+              <div class="ai-row">
+                <span class="ai-label">緊急度</span>
+                <span id="aiPriority" class="prio"></span>
+                <span id="aiReason" class="ai-reason"></span>
+              </div>
+              <div class="ai-row">
+                <span class="ai-label">分類</span>
+                <span id="aiCategory"></span>
+                <button id="btnApplySuggestion" class="btn-outline" type="button">この分類を適用</button>
+              </div>
+              <p id="applyResult" class="meta-text" aria-live="polite"></p>
+            </div>
+          </section>
+
+          <section id="checkBox" class="card hidden" aria-labelledby="checkTitle">
+            <div class="card-head">
+              <h2 id="checkTitle">送る前に確認すること</h2>
+              <span id="checkCount" class="meta-text"></span>
+            </div>
+            <ul id="checkList" class="check-list"></ul>
+          </section>
+
+          <section class="card card-flush" aria-labelledby="draftTitle">
+            <div class="draft-head">
+              <h2 id="draftTitle">下書き</h2>
+              <div id="draftTabs" class="draft-tabs" role="tablist" aria-label="下書きの種類"></div>
+            </div>
+            <div class="draft-body">
+              <p id="draftNote" class="meta-text"></p>
+              <textarea id="draftText" rows="12" aria-labelledby="draftTitle"></textarea>
+              <div class="draft-actions">
+                <button id="btnCopy" class="btn-secondary" type="button">コピー</button>
+              </div>
+            </div>
+          </section>
+
+          <details class="card refs">
+            <summary id="refsSummary">参照した資料</summary>
+            <ul id="citationList" class="source-list"></ul>
+          </details>
+
+          <p id="draftMeta" class="meta-text"></p>
         </div>
 
-        <!-- 検索結果 -->
-        <section id="searchResults" class="hidden">
-          <h3>検索結果</h3>
-          <ul id="searchList" class="source-list"></ul>
-        </section>
-
-        <!-- 回答案 -->
-        <section id="draftSection" class="hidden">
-          <h3>回答案 <span class="draft-label">(Human Review が必要です)</span></h3>
-          <div class="warning-box">⚠️ この回答は AI が生成した下書きです。必ず内容を確認してから使用してください。自動送信はされません。</div>
-          <textarea id="draftText" rows="8"></textarea>
-          <div id="checkBox" class="warning-box hidden">
-            <strong>⚠️ 送る前に確認すること</strong>
-            <ul id="checkList"></ul>
-          </div>
-          <div id="suggestionArea" class="hidden">
-            <div id="suggestionBox" class="suggestion-box"></div>
-            <button id="btnApplySuggestion" class="btn-secondary" style="margin-top:6px">✅ 分類案をチケットに適用する</button>
-            <span id="applyResult" class="meta-text" style="margin-left:8px"></span>
-          </div>
-          <h4>参照元</h4>
-          <ul id="citationList" class="source-list"></ul>
-          <p id="draftMeta" class="meta-text"></p>
-        </section>
-
-        <!-- エラー表示 -->
-        <div id="errorBox" class="error-box hidden"></div>
-
-        <!-- ローディング -->
-        <div id="loadingSpinner" class="loading hidden">処理中…</div>
+        <div id="errorBox" class="error-box hidden" role="alert"></div>
       </div>
     </main>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>
