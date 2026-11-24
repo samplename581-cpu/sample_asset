@@ -1,4 +1,3 @@
-
 /* ========================================
    基本設定
 ======================================== */
@@ -10,14 +9,16 @@ const CONFIG = {
   // ★GoogleドライブのフォルダIDを入力
   FOLDER_ID: "",
 
-  GMAIL_QUERY: 'subject:"お問い合わせ" newer_than:30d',
+  GMAIL_QUERY: 'subject:"お問い合わせ" newer_than:30d -in:trash -in:spam',
   SUBJECT_PREFIX: "【お問い合わせ】",
 
   // テスト時は空欄でOK
   SENDER_EMAIL: "",
 
   INTERVAL: 5,
-  AUTO_SORT: true,
+  AUTO_SORT: false, // 担当者の入力中に行を移動させない
+  WAIT_WARNING_HOURS: 6,
+  WAIT_CRITICAL_HOURS: 24,
   TIMEZONE: "Asia/Tokyo"
 };
 
@@ -46,8 +47,19 @@ const HEADERS = [
   "FAQ番号",
   "備考",
   "添付画像",
-  "メールID"
+  "メールID", // P: 非表示のまま維持
+  "対応待ち時間", // Q
+  "元メール" // R
 ];
+
+const COL = { IMAGE: 15, MAIL_ID: 16, WAIT: 17, MAIL_LINK: 18 };
+const WAIT_FORMULA = '=IF(RC1="","",IF(RC12="完了","対応済み",IF(OR(NOT(ISNUMBER(RC2)),RC2<=0),"日時要確認",MAX(0,NOW()-RC2))))';
+const WAIT_FORMAT = '[h]"時間"mm"分"';
+const IMAGE_TYPES = {
+  jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png",
+  webp: "image/webp", gif: "image/gif", heic: "image/heic",
+  heif: "image/heif", bmp: "image/bmp", tif: "image/tiff", tiff: "image/tiff"
+};
 
 
 /* ========================================
@@ -60,8 +72,9 @@ const DROPDOWNS = {
     "配送関連",
     "商品不良・破損",
     "組み立て・使い方",
-    "店舗・在庫・その他",
-    "注文変更・キャンセル"
+    "注文変更・キャンセル",
+    "店舗・在庫",
+    "その他"
   ],
 
   I: [
@@ -90,6 +103,28 @@ const DROPDOWNS = {
 
 
 /* ========================================
+   フォームの問い合わせ種類からカテゴリへ変換
+======================================== */
+
+function getCategory(inquiryType) {
+  const type = String(inquiryType ?? "").trim();
+  const categoryMap = new Map([
+    ["配送について", "配送関連"],
+    ["商品の傷・不具合", "商品不良・破損"],
+    ["組み立て・使い方", "組み立て・使い方"],
+    ["注文の変更・キャンセル", "注文変更・キャンセル"],
+    ["店舗・在庫", "店舗・在庫"],
+    ["その他", "その他"],
+    // 以前のテストメールにも対応
+    ["配送関連", "配送関連"],
+    ["商品不良・破損", "商品不良・破損"],
+    ["注文変更・キャンセル", "注文変更・キャンセル"]
+  ]);
+  return categoryMap.get(type) || "";
+}
+
+
+/* ========================================
    メイン処理
 ======================================== */
 
@@ -115,10 +150,6 @@ function importGmailToSheet() {
 
     validateHeaders(sheet);
 
-    const folder = DriveApp.getFolderById(
-      CONFIG.FOLDER_ID
-    );
-
     const lastRow = sheet.getLastRow();
 
     const registeredIds = new Set();
@@ -128,7 +159,7 @@ function importGmailToSheet() {
     if (lastRow > 1) {
 
       const rows = sheet.getRange(
-        2, 1, lastRow - 1, 16
+        2, 1, lastRow - 1, HEADERS.length
       ).getDisplayValues();
 
       rows.forEach(row => {
@@ -202,15 +233,9 @@ function importGmailToSheet() {
               ? parseReceptionDate(data["受付日時"])
               : "";
 
-            step = "添付画像保存";
-
-            const images = saveJpgImages(
-              message,
-              folder,
-              receptionNumber
-            );
-
             step = "スプレッドシート登録";
+
+            const category = getCategory(data["お問い合わせの種類"]);
 
             const row = [
               safeText(receptionNumber),             // A
@@ -221,15 +246,17 @@ function importGmailToSheet() {
               safeText(data["商品名"]),               // F
               safeText(data["問い合わせ内容（要約）"]), // G
 
-              "",          // H カテゴリ
+              category,    // H カテゴリ（フォームから自動入力）
               "",          // I 緊急度
               "",          // J 対応区分
               "",          // K 担当
               "未対応",    // L ステータス
               "",          // M FAQ番号
               "",          // N 備考
-              "",          // O 添付画像
-              ""           // P メールID
+              "添付確認中（残る場合は元メールを確認）", // O 添付画像
+              safeText(messageId), // P メールID
+              "",          // Q 対応待ち時間（数式）
+              ""           // R 元メール
             ];
 
             const rowNumber = sheet.getLastRow() + 1;
@@ -239,10 +266,11 @@ function importGmailToSheet() {
               sheet.insertRowsAfter(
                 sheet.getMaxRows(), 100
               );
+              applyColors(sheet);
             }
 
             const range = sheet.getRange(
-              rowNumber, 1, 1, 16
+              rowNumber, 1, 1, HEADERS.length
             );
 
             try {
@@ -254,12 +282,6 @@ function importGmailToSheet() {
 
               range.setValues([row]);
 
-              // O列に画像リンクを登録
-              setImageLinks(
-                sheet.getRange(rowNumber, 15),
-                images
-              );
-
               // プルダウン設定
               applyDropdowns(sheet, rowNumber, 1);
 
@@ -269,9 +291,9 @@ function importGmailToSheet() {
               sheet.getRange(rowNumber, 14, 1, 2)
                 .setWrap(true);
 
-              // 全処理成功後にメールIDを記録
-              sheet.getRange(rowNumber, 16)
-                .setValue(messageId);
+              // 本文登録を先に確定する。添付保存の失敗では取り消さない。
+              setWaitingTime(sheet, rowNumber);
+              SpreadsheetApp.flush();
 
               registeredIds.add(messageId);
               registeredNumbers.add(receptionNumber);
@@ -282,8 +304,55 @@ function importGmailToSheet() {
 
               // 途中まで登録された内容を取り消す
               range.clearContent();
+              SpreadsheetApp.flush();
 
               throw writeError;
+            }
+
+            // 元メールへのリンクは本文登録とは独立して処理する。
+            try {
+              setOriginalMailLink(sheet.getRange(rowNumber, COL.MAIL_LINK), thread);
+              SpreadsheetApp.flush();
+            } catch (linkError) {
+              logError(ss, receptionNumber, message.getSubject(), messageId,
+                "元メールリンク", linkError);
+            }
+
+            // 画像は本文登録後に保存する。失敗・非対応形式はO列とログで通知。
+            try {
+              const result = saveImages(message, receptionNumber);
+              setImageLinks(sheet.getRange(rowNumber, COL.IMAGE), result.images, result.warnings);
+              SpreadsheetApp.flush();
+              result.warnings.forEach(detail => {
+                logError(ss, receptionNumber, message.getSubject(), messageId,
+                  "添付画像保存", new Error(detail));
+              });
+            } catch (imageError) {
+              logError(ss, receptionNumber, message.getSubject(), messageId,
+                "添付画像保存", imageError);
+              try {
+                sheet.getRange(rowNumber, COL.IMAGE)
+                  .setValue("⚠ 添付画像の処理失敗：元メールを確認")
+                  .setWrap(true);
+                SpreadsheetApp.flush();
+              } catch (warningError) {
+                console.error("画像警告表示失敗：" + warningError.message);
+              }
+            }
+
+            // 未知・空欄の種類でも問い合わせを取りこぼさない。
+            // H列は空欄にして、担当者が確認できるようログへ記録する。
+            if (!category) {
+              try {
+                logError(
+                  ss, receptionNumber, message.getSubject(), messageId,
+                  "カテゴリ判定",
+                  new Error("お問い合わせの種類が未設定または未対応：" +
+                    (data["お問い合わせの種類"] || "（空欄）"))
+                );
+              } catch (logErr) {
+                console.error("カテゴリ判定のログ記録失敗：" + logErr.message);
+              }
             }
 
           } catch (error) {
@@ -339,68 +408,57 @@ function importGmailToSheet() {
 ======================================== */
 
 function parseMailBody(body) {
-
   const result = {};
 
   MAIL_FIELDS.forEach(field => {
     result[field.header] = "";
   });
+  // 管理表に列を増やさず、カテゴリ判定にだけ使用する。
+  result["お問い合わせの種類"] = "";
 
   const lines = body
     .replace(/\r\n?/g, "\n")
     .replace(/\u00a0/g, " ")
     .split("\n");
 
-  let currentField = null;
+  let inContent = false;
 
   for (const rawLine of lines) {
-
     const line = rawLine.trim();
 
-    // 添付ファイルの表示行は除外
-    if (line.startsWith("📎")) {
-      currentField = null;
+    // 本文中の注文番号などを別の項目として誤認識しない。
+    // 現在のメール形式ではお問い合わせ内容が最後の入力項目。
+    if (inContent) {
+      if (line.startsWith("📎")) break;
+      result["問い合わせ内容（要約）"] += "\n" + rawLine;
       continue;
     }
 
-    // お問い合わせの種類は自動登録しない
-    if (/^お問い合わせの種類\s*[:：]/.test(line)) {
-      currentField = null;
+    if (line.startsWith("📎")) continue;
+
+    // フォームの種類を取得（全角・半角コロン、空白に対応）。
+    const typeMatch = line.match(/^お問い合わせの種類\s*[:：]\s*(.*)$/);
+    if (typeMatch) {
+      result["お問い合わせの種類"] = typeMatch[1].trim();
       continue;
     }
 
-    const field = MAIL_FIELDS.find(item =>
-      line.startsWith(item.label + "：") ||
-      line.startsWith(item.label + ":")
-    );
+    for (const field of MAIL_FIELDS) {
+      if (!line.startsWith(field.label)) continue;
+      const match = line.slice(field.label.length).match(/^\s*[:：]\s*(.*)$/);
+      if (!match) continue;
 
-    if (field) {
-
-      currentField = field.header;
-
-      result[currentField] = line
-        .slice(field.label.length + 1)
-        .trim();
-
-      continue;
-    }
-
-    // 問い合わせ内容の複数行に対応
-    if (
-      currentField === "問い合わせ内容（要約）"
-    ) {
-      result[currentField] += "\n" + rawLine;
+      result[field.header] = match[1].trim();
+      if (field.header === "問い合わせ内容（要約）") {
+        inContent = true;
+      }
+      break;
     }
   }
 
   Object.keys(result).forEach(key => {
-
     const value = result[key].trim();
-
-    // 空欄やダッシュは空欄として扱う
-    result[key] = /^(—|―|－|-|なし)$/.test(value)
-      ? ""
-      : value;
+    result[key] = /^(—|―|－|-|なし)$/.test(value) ? "" : value;
   });
 
   return result;
@@ -482,99 +540,139 @@ function parseReceptionDate(value) {
 
 
 /* ========================================
-   JPG画像をGoogleドライブに保存
+   添付画像保存（本文登録とは独立）
 ======================================== */
 
-function saveJpgImages(message, folder, receptionNumber) {
-
+function saveImages(message, receptionNumber) {
+  const images = [];
+  const warnings = [];
   const attachments = message.getAttachments({
     includeInlineImages: false,
     includeAttachments: true
   });
-
-  const images = [];
+  let folder = null;
+  let folderError = null;
 
   attachments.forEach((attachment, index) => {
+    let name = "添付ファイル " + (index + 1);
+    try {
+      name = attachment.getName() || name;
+      const ext = (name.split(".").pop() || "").toLowerCase();
+      const mime = name.includes(".") && Object.prototype.hasOwnProperty.call(IMAGE_TYPES, ext)
+        ? IMAGE_TYPES[ext] : "";
+      if (!mime) {
+        warnings.push("非対応形式：" + name);
+        return;
+      }
 
-    const name = attachment.getName();
+      // JPG・PNGの代表的なファイルシグネチャを確認。
+      // 他の形式を含め、画像全体の破損検査までは行わない。
+      if (ext === "jpg" || ext === "jpeg" || ext === "png") {
+        const signature = ext === "png"
+          ? [137, 80, 78, 71, 13, 10, 26, 10]
+          : [255, 216, 255];
+        const bytes = attachment.getBytes();
+        if (bytes.length < signature.length ||
+            !signature.every((v, i) => (bytes[i] & 255) === v)) {
+          throw new Error("画像形式が不正");
+        }
+      }
 
-    // JPG・JPEG以外は除外
-    if (!/\.(jpg|jpeg)$/i.test(name)) return;
+      // 画像がある場合だけDriveへアクセスする。
+      // フォルダ障害でも本文登録・他のメールの処理は継続する。
+      if (folderError) throw folderError;
+      if (!folder) {
+        try {
+          folder = DriveApp.getFolderById(CONFIG.FOLDER_ID);
+        } catch (error) {
+          folderError = error;
+          throw error;
+        }
+      }
 
-    const bytes = attachment.getBytes();
-
-    // JPEG形式か確認
-    if (
-      bytes.length < 3 ||
-      (bytes[0] & 255) !== 255 ||
-      (bytes[1] & 255) !== 216 ||
-      (bytes[2] & 255) !== 255
-    ) {
-      throw new Error("JPEG形式が不正：" + name);
+      const fileName = receptionNumber + "_" + message.getId() + "_" + index + "_" + name;
+      const existing = folder.getFilesByName(fileName);
+      const file = existing.hasNext() ? existing.next() : folder.createFile(
+        attachment.copyBlob().setName(fileName).setContentType(mime)
+      );
+      images.push({ name: name, url: file.getUrl() });
+    } catch (error) {
+      warnings.push("保存失敗：" + name + "（" + (error.message || String(error)) + "）");
     }
-
-    const fileName =
-      receptionNumber + "_" +
-      message.getId() + "_" +
-      index + "_" + name;
-
-    const existing = folder.getFilesByName(fileName);
-
-    // 再実行時の画像の二重保存を防止
-    const file = existing.hasNext()
-      ? existing.next()
-      : folder.createFile(
-          attachment.copyBlob()
-            .setName(fileName)
-            .setContentType("image/jpeg")
-        );
-
-    images.push({
-      name: name,
-      url: file.getUrl()
-    });
   });
 
-  return images;
+  return { images: images, warnings: warnings };
 }
 
 
 /* ========================================
-   画像リンクの登録
+   画像リンク・保存失敗の表示
 ======================================== */
 
-function setImageLinks(cell, images) {
-
-  if (images.length === 0) {
+function setImageLinks(cell, images, warnings = []) {
+  if (!images.length && !warnings.length) {
     cell.clearContent();
     return;
   }
-
-  const text = images
-    .map(image => image.name)
-    .join("\n");
-
-  const builder = SpreadsheetApp
-    .newRichTextValue()
-    .setText(text);
-
+  const labels = images.map(image => image.name);
+  if (warnings.length) {
+    labels.push("⚠ " + warnings.length + "件の添付を保存できませんでした。元メール・エラーログを確認");
+  }
+  const builder = SpreadsheetApp.newRichTextValue().setText(labels.join("\n"));
   let position = 0;
-
   images.forEach(image => {
-
     const end = position + image.name.length;
-
-    builder.setLinkUrl(
-      position,
-      end,
-      image.url
-    );
-
+    builder.setLinkUrl(position, end, image.url);
     position = end + 1;
   });
+  cell.setRichTextValue(builder.build()).setWrap(true);
+}
 
-  cell.setRichTextValue(builder.build());
-  cell.setWrap(true);
+
+/* ========================================
+   対応待ち時間・元メールリンク
+======================================== */
+
+function setWaitingTime(sheet, rowNumber) {
+  // B列の受付日時から経過した暦時間（休日・夜間も含む）。
+  // 完了の場合は経過時間を表示しない。完了までの実績時間ではない。
+  sheet.getRange(rowNumber, COL.WAIT)
+    .setNumberFormat(WAIT_FORMAT)
+    .setFormulaR1C1(WAIT_FORMULA);
+}
+
+function setOriginalMailLink(cell, thread) {
+  const url = thread.getPermalink();
+  if (!url) throw new Error("元メールのURLが取得できません");
+  cell.setRichTextValue(SpreadsheetApp.newRichTextValue()
+    .setText("メールを開く").setLinkUrl(url).build());
+}
+
+function writeWaitingFormulas(sheet, rows) {
+  if (!rows.length) return;
+  const formulas = rows.map(row => [row[0] ? WAIT_FORMULA : ""]);
+  sheet.getRange(2, COL.WAIT, rows.length, 1)
+    .setNumberFormat(WAIT_FORMAT).setFormulasR1C1(formulas);
+}
+
+// 更新時に既存行のQ・R列も設定する。既存のA～P列は書き換えない。
+function initializeExtraColumns(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+  const rows = sheet.getRange(2, 1, lastRow - 1, HEADERS.length).getDisplayValues();
+  writeWaitingFormulas(sheet, rows);
+  rows.forEach((row, index) => {
+    const messageId = row[COL.MAIL_ID - 1];
+    if (!row[0] || !messageId || row[COL.MAIL_LINK - 1]) return;
+    try {
+      const message = GmailApp.getMessageById(messageId);
+      if (!message) throw new Error("元メールが見つかりません");
+      setOriginalMailLink(sheet.getRange(index + 2, COL.MAIL_LINK), message.getThread());
+    } catch (error) {
+      // 削除済み・別アカウントのメールなど。既存行の更新を止めない。
+      logError(sheet.getParent(), row[0], "", messageId, "元メールリンク", error);
+    }
+  });
 }
 
 
@@ -628,7 +726,7 @@ function applyColors(sheet) {
     .filter(rule =>
       !rule.getRanges().some(range =>
         range.getNumColumns() === 1 &&
-        [9, 12].includes(range.getColumn())
+        [9, 12, COL.WAIT].includes(range.getColumn())
       )
     );
 
@@ -643,6 +741,19 @@ function applyColors(sheet) {
     );
   });
 
+  const waitRange = sheet.getRange("Q2:Q");
+  const warning = CONFIG.WAIT_WARNING_HOURS / 24;
+  const critical = CONFIG.WAIT_CRITICAL_HOURS / 24;
+  const waitRules = [
+    ['=AND(ISNUMBER($Q2),$Q2>=' + critical + ')', "#f4cccc"],
+    ['=AND(ISNUMBER($Q2),$Q2>=' + warning + ',$Q2<' + critical + ')', "#fff2cc"],
+    ['=$Q2="対応済み"', "#d9ead3"],
+    ['=$Q2="日時要確認"', "#fff2cc"]
+  ];
+  waitRules.forEach(([formula, color]) => {
+    rules.push(SpreadsheetApp.newConditionalFormatRule()
+      .whenFormulaSatisfied(formula).setBackground(color).setRanges([waitRange]).build());
+  });
   sheet.setConditionalFormatRules(rules);
 }
 
@@ -653,18 +764,15 @@ function applyColors(sheet) {
 
 function initializeMainSheet(sheet) {
 
-  if (sheet.getMaxColumns() < 16) {
-
-    sheet.insertColumnsAfter(
-      sheet.getMaxColumns(),
-      16 - sheet.getMaxColumns()
-    );
+  if (sheet.getMaxColumns() < HEADERS.length) {
+    sheet.insertColumnsAfter(sheet.getMaxColumns(), HEADERS.length - sheet.getMaxColumns());
   }
+  if (sheet.getMaxRows() < 2) sheet.insertRowsAfter(sheet.getMaxRows(), 1);
 
   if (sheet.getLastRow() > 0) {
 
     const existing = sheet.getRange(
-      1, 1, 1, 16
+      1, 1, 1, HEADERS.length
     ).getDisplayValues()[0];
 
     // 既存のA～N列が指定の表と一致するか確認
@@ -679,11 +787,11 @@ function initializeMainSheet(sheet) {
       }
     }
 
-    // O・P列に別のデータがある場合は停止
-    for (let i = 14; i < 16; i++) {
+    // O～R列に別用途のデータがあれば上書きしない。
+    for (let i = 14; i < HEADERS.length; i++) {
 
       if (existing[i] && existing[i] !== HEADERS[i]) {
-        throw new Error("O列またはP列が使用されています");
+        throw new Error("既存シートの列構成が異なります：" + HEADERS[i]);
       }
 
       if (!existing[i] && sheet.getLastRow() > 1) {
@@ -693,13 +801,13 @@ function initializeMainSheet(sheet) {
         ).getDisplayValues().flat();
 
         if (values.some(Boolean)) {
-          throw new Error("O列またはP列に既存データがあります");
+          throw new Error("追加先の列に既存データがあります：" + HEADERS[i]);
         }
       }
     }
   }
 
-  sheet.getRange(1, 1, 1, 16)
+  sheet.getRange(1, 1, 1, HEADERS.length)
     .setValues([HEADERS])
     .setFontWeight("bold")
     .setFontColor("#ffffff")
@@ -719,7 +827,7 @@ function initializeMainSheet(sheet) {
     110, 115, 120, 220,
     110, 220, 400, 160,
     75, 170, 190, 100,
-    100, 300, 180, 150
+    100, 300, 250, 150, 145, 125
   ];
 
   widths.forEach((width, index) => {
@@ -740,8 +848,10 @@ function initializeMainSheet(sheet) {
 
   applyColors(sheet);
 
-  // メールID列を非表示
-  sheet.hideColumns(16);
+  // 既存のメールID列はそのまま非表示。新規のQ・R列を表示。
+  sheet.hideColumns(COL.MAIL_ID);
+  sheet.showColumns(COL.WAIT, 2);
+  initializeExtraColumns(sheet);
 
   updateFilter(sheet);
 }
@@ -750,7 +860,7 @@ function initializeMainSheet(sheet) {
 function validateHeaders(sheet) {
 
   const existing = sheet.getRange(
-    1, 1, 1, 16
+    1, 1, 1, HEADERS.length
   ).getDisplayValues()[0];
 
   if (
@@ -775,11 +885,14 @@ function sortRows(sheet, ascending) {
   // 手入力部分・画像リンク・メールIDも
   // 同じ行として一緒に並べ替える
   sheet.getRange(
-    2, 1, lastRow - 1, 16
+    2, 1, lastRow - 1, HEADERS.length
   ).sort({
     column: 2,
     ascending: ascending
   });
+  // 並べ替え後も必ず同じ行のB列・L列を参照する。
+  SpreadsheetApp.flush();
+  writeWaitingFormulas(sheet, sheet.getRange(2, 1, lastRow - 1, 1).getDisplayValues());
 }
 
 
@@ -833,7 +946,7 @@ function updateFilter(sheet) {
       range.getRow() === 1 &&
       range.getColumn() === 1 &&
       range.getNumRows() === rowCount &&
-      range.getNumColumns() === 16
+      range.getNumColumns() === HEADERS.length
     ) {
       return;
     }
@@ -843,7 +956,7 @@ function updateFilter(sheet) {
 
       for (
         let col = 1;
-        col <= Math.min(range.getNumColumns(), 16);
+        col <= Math.min(range.getNumColumns(), HEADERS.length);
         col++
       ) {
 
@@ -860,7 +973,7 @@ function updateFilter(sheet) {
   }
 
   const newFilter = sheet.getRange(
-    1, 1, rowCount, 16
+    1, 1, rowCount, HEADERS.length
   ).createFilter();
 
   Object.entries(criteria).forEach(([col, condition]) => {
@@ -886,78 +999,84 @@ function logError(
   error
 ) {
 
-  let sheet = ss.getSheetByName(
-    CONFIG.ERROR_SHEET_NAME
-  );
-
-  if (!sheet) {
-
-    sheet = ss.insertSheet(
+  const detail = error && error.message ? error.message : String(error);
+  try {
+    SpreadsheetApp.flush();
+    let sheet = ss.getSheetByName(
       CONFIG.ERROR_SHEET_NAME
     );
-  }
 
-  if (sheet.getLastRow() === 0) {
+    if (!sheet) {
+
+      sheet = ss.insertSheet(
+        CONFIG.ERROR_SHEET_NAME
+      );
+    }
+
+    if (sheet.getLastRow() === 0) {
+
+      sheet.appendRow([
+        "エラー発生日時",
+        "受付番号",
+        "メール件名",
+        "メールID",
+        "処理内容",
+        "エラー詳細"
+      ]);
+
+      sheet.getRange("A1:F1")
+        .setBackground("#a61c00")
+        .setFontColor("#ffffff")
+        .setFontWeight("bold");
+
+      sheet.setFrozenRows(1);
+
+      sheet.setColumnWidth(1, 170);
+      sheet.setColumnWidth(2, 120);
+      sheet.setColumnWidth(3, 280);
+      sheet.setColumnWidth(4, 160);
+      sheet.setColumnWidth(5, 180);
+      sheet.setColumnWidth(6, 450);
+
+      sheet.getRange("A2:A")
+        .setNumberFormat("yyyy/MM/dd HH:mm:ss");
+
+      sheet.getRange("F2:F").setWrap(true);
+    }
+
+    // 同じメールの同じエラーの重複記録を防止
+    const lastRow = sheet.getLastRow();
+
+    if (messageId && lastRow > 1) {
+      const duplicate = sheet
+        .getRange(2, 4, lastRow - 1, 3)
+        .getDisplayValues()
+        .some(row =>
+          row[0] === String(messageId) &&
+          row[1] === String(step) &&
+          row[2] === String(detail)
+        );
+
+      if (duplicate) {
+        return;
+      }
+    }
 
     sheet.appendRow([
-      "エラー発生日時",
-      "受付番号",
-      "メール件名",
-      "メールID",
-      "処理内容",
-      "エラー詳細"
+      new Date(),
+      safeText(receptionNumber),
+      safeText(subject),
+      safeText(messageId),
+      safeText(step),
+      safeText(detail)
     ]);
 
-    sheet.getRange("A1:F1")
-      .setBackground("#a61c00")
-      .setFontColor("#ffffff")
-      .setFontWeight("bold");
-
-    sheet.setFrozenRows(1);
-
-    sheet.setColumnWidth(1, 170);
-    sheet.setColumnWidth(2, 120);
-    sheet.setColumnWidth(3, 280);
-    sheet.setColumnWidth(4, 160);
-    sheet.setColumnWidth(5, 180);
-    sheet.setColumnWidth(6, 450);
-
-    sheet.getRange("A2:A")
-      .setNumberFormat("yyyy/MM/dd HH:mm:ss");
-
-    sheet.getRange("F2:F").setWrap(true);
+    SpreadsheetApp.flush();
+    console.error(step + "：" + detail);
+  } catch (logError) {
+    console.error(step + "：" + detail);
+    console.error("エラーログ記録失敗：" + (logError.message || String(logError)));
   }
-
-  const detail = error.message || String(error);
-
-  // 同じメールの同じエラーの重複記録を防止
-  const lastRow = sheet.getLastRow();
-
-  if (messageId && lastRow > 1) {
-    const duplicate = sheet
-      .getRange(2, 4, lastRow - 1, 3)
-      .getDisplayValues()
-      .some(row =>
-        row[0] === String(messageId) &&
-        row[1] === String(step) &&
-        row[2] === String(detail)
-      );
-
-    if (duplicate) {
-      return;
-    }
-  }
-
-  sheet.appendRow([
-    new Date(),
-    safeText(receptionNumber),
-    safeText(subject),
-    safeText(messageId),
-    safeText(step),
-    safeText(detail)
-  ]);
-
-  console.error(step + "：" + detail);
 }
 
 
@@ -1003,15 +1122,21 @@ function setupTrigger() {
     throw new Error("スプレッドシートから実行してください");
   }
 
-  PropertiesService.getScriptProperties()
-    .setProperty("SPREADSHEET_ID", ss.getId());
-
-  ss.setSpreadsheetTimeZone(CONFIG.TIMEZONE);
-
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
   try {
+    if (!(CONFIG.WAIT_WARNING_HOURS >= 0 && CONFIG.WAIT_CRITICAL_HOURS > CONFIG.WAIT_WARNING_HOURS)) {
+      throw new Error("待ち時間の警告基準が不正です");
+    }
+    ss.setSpreadsheetTimeZone(CONFIG.TIMEZONE);
+    ss.setRecalculationInterval(SpreadsheetApp.RecalculationInterval.MINUTE);
 
-    // 保存先フォルダの確認
-    DriveApp.getFolderById(CONFIG.FOLDER_ID);
+    // 保存先にアクセスできなくても本文の取り込み設定は可能。
+    try {
+      DriveApp.getFolderById(CONFIG.FOLDER_ID);
+    } catch (error) {
+      logError(ss, "", "", "", "保存先フォルダ確認", error);
+    }
 
     let sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
 
@@ -1024,6 +1149,9 @@ function setupTrigger() {
     if (!ss.getSheetByName(CONFIG.ERROR_SHEET_NAME)) {
       ss.insertSheet(CONFIG.ERROR_SHEET_NAME);
     }
+
+    SpreadsheetApp.flush();
+    PropertiesService.getScriptProperties().setProperty("SPREADSHEET_ID", ss.getId());
 
     // 古いトリガーを削除
     ScriptApp.getProjectTriggers()
@@ -1052,6 +1180,8 @@ function setupTrigger() {
     );
 
     throw error;
+  } finally {
+    lock.releaseLock();
   }
 }
 
