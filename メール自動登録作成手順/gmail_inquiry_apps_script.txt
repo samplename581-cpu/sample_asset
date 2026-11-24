@@ -1,0 +1,358 @@
+/* Gmail → 問い合わせ管理表 / Google Apps Script (V8)
+ * 1. FOLDER_ID を設定する
+ * 2. スプレッドシートの「拡張機能 → Apps Script」に全文を貼る
+ * 3. setupTrigger を実行し、権限を許可する
+ * 4. importGmailToSheet を実行してテストする
+ */
+const CONFIG = {
+  SHEET_NAME: '問い合わせ管理',
+  ERROR_SHEET_NAME: 'エラーログ',
+  FOLDER_ID: 'ここにフォルダIDを入力',
+  GMAIL_QUERY: 'subject:"お問い合わせ" newer_than:30d -in:trash -in:spam',
+  SUBJECT_PREFIX: '【お問い合わせ】',
+  SENDER_EMAIL: '', // 本番ではフォームの実際の送信元アドレスを指定
+  INTERVAL: 5,
+  AUTO_SORT: true,
+  TIMEZONE: 'Asia/Tokyo'
+};
+
+const MAIL_FIELDS = [
+  ['受付番号', '受付番号'],
+  ['受付日時', '受付日時'],
+  ['お客様名', 'お名前'],
+  ['メールアドレス', 'メールアドレス'],
+  ['注文番号', '注文番号'],
+  ['商品名', '商品名'],
+  ['問い合わせ内容（要約）', 'お問い合わせ内容']
+];
+const HEADERS = [...MAIL_FIELDS.map(f => f[0]),
+  'カテゴリ', '緊急度', '対応区分', '担当', 'ステータス',
+  'FAQ番号', '備考', '添付画像', 'メールID'];
+const DROPDOWNS = {
+  8: ['配送関連', '商品不良・破損', '組み立て・使い方', '店舗・在庫・その他', '注文変更・キャンセル'],
+  9: ['高', '中', '低'],
+  10: ['FAQで回答', '専門部署へ引き継ぎ'],
+  11: ['窓口担当', '配送センター担当', '修理・アフターサービス担当'],
+  12: ['未対応', '対応中', '完了']
+};
+const ERROR_HEADERS = ['エラー発生日時', '受付番号', 'メール件名', 'メールID', '処理内容', 'エラー詳細'];
+
+// 初回設定・トリガーの再設定
+function setupTrigger() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) throw new Error('スプレッドシートからApps Scriptを開いてください');
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    if (!CONFIG.FOLDER_ID || CONFIG.FOLDER_ID === 'ここにフォルダIDを入力') {
+      throw new Error('CONFIG.FOLDER_IDを設定してください');
+    }
+    DriveApp.getFolderById(CONFIG.FOLDER_ID).getName();
+    ss.setSpreadsheetTimeZone(CONFIG.TIMEZONE);
+    const sheet = ss.getSheetByName(CONFIG.SHEET_NAME) || ss.insertSheet(CONFIG.SHEET_NAME);
+    initializeMainSheet(sheet);
+    initializeErrorSheet(ss);
+    SpreadsheetApp.flush();
+    PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', ss.getId());
+    // 同じ実行アカウントが作った既存トリガーを削除する
+    ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'importGmailToSheet')
+      .forEach(t => ScriptApp.deleteTrigger(t));
+    ScriptApp.newTrigger('importGmailToSheet').timeBased().everyMinutes(CONFIG.INTERVAL).create();
+    console.log('初期設定完了');
+  } catch (error) {
+    logErrorSafely(ss, '', '', '', '初期設定', error);
+    throw error;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// メイン処理：手動実行・時間主導型トリガー共通
+function importGmailToSheet() {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) return;
+  let ss;
+  try {
+    ss = getSpreadsheet();
+    const sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
+    if (!sheet) throw new Error('問い合わせ管理シートがありません');
+    validateHeaders(sheet);
+    const folder = DriveApp.getFolderById(CONFIG.FOLDER_ID);
+    const ids = new Set(), numbers = new Set();
+    if (sheet.getLastRow() > 1) {
+      sheet.getRange(2, 1, sheet.getLastRow() - 1, 16).getDisplayValues().forEach(row => {
+        if (row[0]) numbers.add(row[0].trim());
+        if (row[15]) ids.add(row[15]);
+      });
+    }
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    let offset = 0, added = 0;
+    const batchSize = 100;
+    while (true) {
+      const threads = GmailApp.search(CONFIG.GMAIL_QUERY, offset, batchSize);
+      if (!threads.length) break;
+      for (const thread of threads) {
+        for (const message of thread.getMessages()) {
+          const id = message.getId();
+          if (ids.has(id) || message.getDate().getTime() < cutoff || !isTargetMessage(message)) continue;
+          let number = '', step = 'メール本文解析';
+          try {
+            const data = parseMailBody(message.getPlainBody());
+            number = data['受付番号'];
+            if (!number) throw new Error('受付番号が取得できません');
+            if (numbers.has(number)) continue;
+            step = '受付日時変換';
+            const date = data['受付日時'] ? parseReceptionDate(data['受付日時']) : '';
+            step = '添付画像保存';
+            const images = saveJpgImages(message, folder, number);
+            step = 'スプレッドシート登録';
+            const rowNumber = sheet.getLastRow() + 1;
+            if (rowNumber > sheet.getMaxRows()) sheet.insertRowsAfter(sheet.getMaxRows(), 100);
+            const range = sheet.getRange(rowNumber, 1, 1, 16);
+            const row = [safeText(number), date, safeText(data['お客様名']),
+              safeText(data['メールアドレス']), safeText(data['注文番号']),
+              safeText(data['商品名']), safeText(data['問い合わせ内容（要約）']),
+              '', '', '', '', '未対応', '', '', '', ''];
+            try {
+              range.setNumberFormat('@');
+              sheet.getRange(rowNumber, 2).setNumberFormat('MM/dd HH:mm');
+              range.setValues([row]);
+              setImageLinks(sheet.getRange(rowNumber, 15), images);
+              applyDropdowns(sheet, rowNumber, 1);
+              sheet.getRange(rowNumber, 7).setWrap(true);
+              sheet.getRange(rowNumber, 14, 1, 2).setWrap(true);
+              sheet.getRange(rowNumber, 16).setValue(id);
+              SpreadsheetApp.flush();
+            } catch (writeError) {
+              try { range.clearContent(); SpreadsheetApp.flush(); }
+              catch (rollbackError) { console.error('行の取り消し失敗: ' + rollbackError.message); }
+              throw writeError;
+            }
+            ids.add(id);
+            numbers.add(number);
+            added++;
+          } catch (error) {
+            logErrorSafely(ss, number, message.getSubject(), id, step, error);
+          }
+        }
+      }
+      offset += threads.length;
+      if (threads.length < batchSize) break;
+    }
+    if (added > 0 && CONFIG.AUTO_SORT) sortRows(sheet, false);
+    updateFilter(sheet);
+    SpreadsheetApp.flush();
+    console.log('新規登録件数：' + added);
+  } catch (error) {
+    logErrorSafely(ss, '', '', '', 'システム処理', error);
+    throw error;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function isTargetMessage(message) {
+  if (message.isDraft() || message.isInTrash()) return false;
+  if (!message.getSubject().startsWith(CONFIG.SUBJECT_PREFIX)) return false;
+  if (CONFIG.SENDER_EMAIL) {
+    const from = message.getFrom();
+    const match = from.match(/<([^<>]+)>/);
+    const address = (match ? match[1] : from).trim().toLowerCase();
+    if (address !== CONFIG.SENDER_EMAIL.trim().toLowerCase()) return false;
+  }
+  return true;
+}
+
+function parseMailBody(body) {
+  const result = Object.fromEntries(MAIL_FIELDS.map(f => [f[0], '']));
+  const lines = body.replace(/\r\n?/g, '\n').replace(/\u00a0/g, ' ').split('\n');
+  let inContent = false;
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (line.startsWith('📎')) { inContent = false; continue; }
+    if (inContent) {
+      result['問い合わせ内容（要約）'] += '\n' + raw;
+      continue;
+    }
+    const field = MAIL_FIELDS.find(f => line.startsWith(f[1] + '：') || line.startsWith(f[1] + ':'));
+    if (!field) continue; // 「お問い合わせの種類」などは登録しない
+    result[field[0]] = line.slice(field[1].length + 1).trim();
+    if (field[0] === '問い合わせ内容（要約）') inContent = true;
+  }
+  for (const key of Object.keys(result)) {
+    const value = result[key].trim();
+    result[key] = /^(—|―|－|-|なし)$/.test(value) ? '' : value;
+  }
+  return result;
+}
+
+function parseReceptionDate(value) {
+  const m = value.trim().match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{2})$/);
+  if (!m) throw new Error('受付日時の形式が不正：' + value);
+  const normalized = `${m[1]}/${m[2].padStart(2,'0')}/${m[3].padStart(2,'0')} ${m[4].padStart(2,'0')}:${m[5]}`;
+  const date = Utilities.parseDate(normalized, CONFIG.TIMEZONE, 'yyyy/MM/dd HH:mm');
+  if (Utilities.formatDate(date, CONFIG.TIMEZONE, 'yyyy/MM/dd HH:mm') !== normalized) {
+    throw new Error('存在しない受付日時：' + value);
+  }
+  return date;
+}
+
+function saveJpgImages(message, folder, number) {
+  const images = [];
+  const attachments = message.getAttachments({includeInlineImages: false, includeAttachments: true});
+  attachments.forEach((attachment, index) => {
+    const name = attachment.getName();
+    if (!/\.(jpg|jpeg)$/i.test(name)) return;
+    const bytes = attachment.getBytes();
+    if (bytes.length < 3 || (bytes[0] & 255) !== 255 || (bytes[1] & 255) !== 216 || (bytes[2] & 255) !== 255) {
+      throw new Error('JPEG形式が不正：' + name);
+    }
+    const fileName = `${number}_${message.getId()}_${index}_${name}`;
+    const existing = folder.getFilesByName(fileName);
+    const file = existing.hasNext() ? existing.next() : folder.createFile(attachment.copyBlob().setName(fileName).setContentType('image/jpeg'));
+    images.push({name, url: file.getUrl()});
+  });
+  return images;
+}
+
+function setImageLinks(cell, images) {
+  if (!images.length) { cell.clearContent(); return; }
+  const builder = SpreadsheetApp.newRichTextValue().setText(images.map(i => i.name).join('\n'));
+  let position = 0;
+  images.forEach(i => {
+    builder.setLinkUrl(position, position + i.name.length, i.url);
+    position += i.name.length + 1;
+  });
+  cell.setRichTextValue(builder.build()).setWrap(true);
+}
+
+function initializeMainSheet(sheet) {
+  if (sheet.getMaxColumns() < 16) sheet.insertColumnsAfter(sheet.getMaxColumns(), 16 - sheet.getMaxColumns());
+  if (sheet.getMaxRows() < 2) sheet.insertRowsAfter(sheet.getMaxRows(), 1);
+  if (sheet.getLastRow() > 0) {
+    const existing = sheet.getRange(1, 1, 1, 16).getDisplayValues()[0];
+    for (let i = 0; i < 14; i++) {
+      if (existing[i] !== HEADERS[i]) throw new Error('既存シートの列構成が異なります：' + HEADERS[i]);
+    }
+    for (let i = 14; i < 16; i++) {
+      if (existing[i] && existing[i] !== HEADERS[i]) throw new Error('O列またはP列が使用されています');
+      if (!existing[i] && sheet.getLastRow() > 1 && sheet.getRange(2, i + 1, sheet.getLastRow() - 1, 1).getDisplayValues().flat().some(Boolean)) {
+        throw new Error('O列またはP列に既存データがあります');
+      }
+    }
+  }
+  sheet.getRange(1, 1, 1, 16).setValues([HEADERS]).setFontWeight('bold').setFontColor('#ffffff')
+    .setBackground('#217346').setWrap(true).setVerticalAlignment('middle');
+  sheet.getRange('H1:N1').setBackground('#315d87');
+  sheet.setFrozenRows(1);
+  sheet.setFrozenColumns(2);
+  sheet.setRowHeight(1, 42);
+  [110,115,120,220,110,220,400,160,75,170,190,100,100,300,180,150]
+    .forEach((width, i) => sheet.setColumnWidth(i + 1, width));
+  sheet.getRange('B2:B').setNumberFormat('MM/dd HH:mm');
+  sheet.getRange('G2:G').setWrap(true);
+  sheet.getRange('N2:O').setWrap(true);
+  applyDropdowns(sheet, 2, sheet.getMaxRows() - 1);
+  applyColors(sheet);
+  sheet.hideColumns(16);
+  updateFilter(sheet);
+}
+
+function validateHeaders(sheet) {
+  const existing = sheet.getRange(1, 1, 1, 16).getDisplayValues()[0];
+  if (JSON.stringify(existing) !== JSON.stringify(HEADERS)) throw new Error('列構成が異なります。初期設定を確認してください');
+}
+
+function applyDropdowns(sheet, startRow, count) {
+  for (const [col, values] of Object.entries(DROPDOWNS)) {
+    const rule = SpreadsheetApp.newDataValidation().requireValueInList(values, true).setAllowInvalid(true).build();
+    sheet.getRange(startRow, Number(col), count, 1).setDataValidation(rule);
+  }
+}
+
+function applyColors(sheet) {
+  const rules = sheet.getConditionalFormatRules().filter(rule => !rule.getRanges().some(r => r.getNumColumns() === 1 && [9,12].includes(r.getColumn())));
+  const settings = [
+    ['高','#f4cccc','I2:I'], ['中','#fff2cc','I2:I'], ['低','#d9ead3','I2:I'],
+    ['未対応','#f4cccc','L2:L'], ['対応中','#fff2cc','L2:L'], ['完了','#d9ead3','L2:L']
+  ];
+  settings.forEach(([value, color, range]) => rules.push(SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo(value).setBackground(color).setRanges([sheet.getRange(range)]).build()));
+  sheet.setConditionalFormatRules(rules);
+}
+
+function updateFilter(sheet) {
+  const filter = sheet.getFilter();
+  const rowCount = sheet.getMaxRows();
+  const criteria = {};
+  if (filter) {
+    const r = filter.getRange();
+    if (r.getRow() === 1 && r.getColumn() === 1 && r.getNumRows() === rowCount && r.getNumColumns() === 16) return;
+    if (r.getColumn() === 1) {
+      for (let col = 1; col <= Math.min(r.getNumColumns(),16); col++) {
+        const c = filter.getColumnFilterCriteria(col);
+        if (c) criteria[col] = c;
+      }
+    }
+    filter.remove();
+  }
+  const newFilter = sheet.getRange(1, 1, rowCount, 16).createFilter();
+  Object.entries(criteria).forEach(([col, c]) => newFilter.setColumnFilterCriteria(Number(col), c));
+}
+
+function sortRows(sheet, ascending) {
+  if (sheet.getLastRow() > 2) sheet.getRange(2, 1, sheet.getLastRow() - 1, 16).sort({column: 2, ascending});
+}
+function sortNewest() { manualSort(false); }
+function sortOldest() { manualSort(true); }
+function manualSort(ascending) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sheet = getSpreadsheet().getSheetByName(CONFIG.SHEET_NAME);
+    if (!sheet) throw new Error('問い合わせ管理シートがありません');
+    validateHeaders(sheet);
+    sortRows(sheet, ascending);
+    SpreadsheetApp.flush();
+  } finally { lock.releaseLock(); }
+}
+
+function initializeErrorSheet(ss) {
+  const sheet = ss.getSheetByName(CONFIG.ERROR_SHEET_NAME) || ss.insertSheet(CONFIG.ERROR_SHEET_NAME);
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(1, 1, 1, 6).setValues([ERROR_HEADERS]).setBackground('#a61c00').setFontColor('#ffffff').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+    [170,120,280,160,180,450].forEach((width, i) => sheet.setColumnWidth(i + 1, width));
+    sheet.getRange('A2:A').setNumberFormat('yyyy/MM/dd HH:mm:ss');
+    sheet.getRange('F2:F').setWrap(true);
+  }
+  return sheet;
+}
+
+function logErrorSafely(ss, number, subject, id, step, error) {
+  const detail = error.message || String(error);
+  console.error(step + '：' + detail);
+  if (!ss) return;
+  try {
+    SpreadsheetApp.flush();
+    initializeErrorSheet(ss).appendRow([new Date(), safeText(number), safeText(subject), safeText(id), safeText(step), safeText(detail)]);
+    SpreadsheetApp.flush();
+  } catch (logError) {
+    console.error('エラーログ記録失敗：' + logError.message);
+  }
+}
+
+function getSpreadsheet() {
+  const id = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+  if (!id) throw new Error('先にsetupTriggerを実行してください');
+  return SpreadsheetApp.openById(id);
+}
+function safeText(value) {
+  const text = String(value ?? '');
+  return /^\s*[=+\-@]/.test(text) ? "'" + text : text;
+}
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu('問い合わせ管理')
+    .addItem('今すぐメールを取得', 'importGmailToSheet').addSeparator()
+    .addItem('受付日時：新しい順', 'sortNewest').addItem('受付日時：古い順', 'sortOldest').addSeparator()
+    .addItem('初期設定・自動実行設定', 'setupTrigger').addToUi();
+}
