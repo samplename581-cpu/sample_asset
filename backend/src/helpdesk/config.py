@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     RUNTIME_DATA_DIR: str = "./data/runtime"
     INDEX_DIR: str = "./data/index"
 
+    SHEET_TEMPLATE_PATH: str = "assets/source/business_tools/inquiry_management.xlsx"
+    SHEET_OUTPUT_PATH: str = "data/runtime/inquiry_management.xlsx"
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]

@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, Header, Path, Query, Request, Response, status
 
 from helpdesk.api.masters import read_master
@@ -5,6 +7,8 @@ from helpdesk.config import Settings, get_settings
 from helpdesk.domain.errors import NotFoundError, ValidationError
 from helpdesk.domain.models import Ticket, TicketCreate, TicketPage, TicketUpdate
 from helpdesk.services.ticket_service import TicketService
+
+logger = logging.getLogger(__name__)
 
 _TICKET_ID_PATH = Path(
     ...,
@@ -57,6 +61,19 @@ def create_ticket(
     service = get_ticket_service(request)
     ticket = service.create_ticket(data)
     response.headers["Location"] = f"{request.url.path}/{ticket.ticket_id}"
+
+    # Excel への追記（ベストエフォート: 失敗してもチケット保存・201 は維持する）
+    sheet_exporter = getattr(request.app.state, "sheet_exporter", None)
+    if sheet_exporter is not None:
+        try:
+            sheet_exporter.append_ticket(ticket)
+        except Exception as exc:  # noqa: BLE001
+            logger.error(
+                "sheet_exporter: append_ticket が予期せず失敗しました (%s)。ticket_id=%s",
+                type(exc).__name__,
+                ticket.ticket_id,
+            )
+
     return ticket
 
 

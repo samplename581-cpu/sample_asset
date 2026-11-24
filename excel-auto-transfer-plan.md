@@ -105,7 +105,7 @@ backend/scripts/export_inquiry_sheet.py   ← 今回新規作成
 
 ### サブタスク 1：Excel書き出し部品（ポートとアダプター）を作成する
 
-**Status:** `[ ] pending`
+**Status:** `[x] done`
 
 **Intent:**
 チケット1件を、書き込みルールに従って出力ファイルの空き行に書き込む部品を作る。既存のポートとアダプターの構成にならう。
@@ -136,7 +136,7 @@ backend/scripts/export_inquiry_sheet.py   ← 今回新規作成
 
 ### サブタスク 2：チケット作成時に自動で書き出す
 
-**Status:** `[ ] pending`
+**Status:** `[x] done`
 
 **Intent:**
 `POST /api/v1/tickets` でチケットが作成されたら、サブタスク1の部品を呼んで出力ファイルに追記する。
@@ -160,7 +160,7 @@ backend/scripts/export_inquiry_sheet.py   ← 今回新規作成
 
 ### サブタスク 3：再出力スクリプトを作る（復旧・再同期用）
 
-**Status:** `[ ] pending`
+**Status:** `[x] done`
 
 **Intent:**
 `tickets.json` の全件から出力ファイルを作り直すスクリプトを用意し、書き込み失敗やファイル破損から復旧できるようにする。

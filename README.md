@@ -514,7 +514,20 @@ uv run uvicorn helpdesk.main:app --app-dir backend/src --host 127.0.0.1 --port 8
 
 氏名、メールアドレス、注文番号、備考、添付はTicketにのみ保存し、Embedding、Chroma、LLM Prompt、Logへ渡しません。RAGへ渡す情報は「お問い合わせ種類」「商品名」「問い合わせ内容」に限定しています。`data/runtime/`と`data/index/`はGit管理対象外です。不要になった時点で削除してください。
 
-## 9. （オプション）拡張構成
+## 9. （オプション）問い合わせ管理シート再出力手順
+
+アプリの問い合わせフォームから受け付けたチケットは、自動的に`data/runtime/inquiry_management.xlsx`へ転記されます。Excelファイルが開かれているなどの理由で書き込みに失敗した場合は、次のスクリプトで`tickets.json`の全件から出力ファイルを作り直してください。
+
+```bash
+uv run python backend/scripts/export_inquiry_sheet.py
+```
+
+- テンプレート（`assets/source/business_tools/inquiry_management.xlsx`）から出力ファイルを作り直し、全チケットを受付日時の古い順に書き込みます。
+- 何度実行しても同じ結果になります（冪等）。
+- 実行前に出力ファイル（`data/runtime/inquiry_management.xlsx`）が開かれている場合は、メッセージを表示して終了します。Excelを閉じてから再実行してください。
+- 書き込み失敗はサーバーログに記録されます。失敗に気づいたときはこのスクリプトで復旧してください。
+
+## 10. （オプション）拡張構成
 
 - Docker／Podman（ローカルのみ）: `Dockerfile`と`compose.yaml`。クラウドへのデプロイは想定していません。
 - ローカルEmbedding: `uv sync --extra local-embedding`

@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 
 from helpdesk.adapters.embedding_mock import MockEmbeddingAdapter
 from helpdesk.adapters.factory import create_llm
+from helpdesk.adapters.sheet_excel import ExcelSheetExporter
 from helpdesk.adapters.ticket_json import JsonTicketRepository
 from helpdesk.adapters.vector_numpy import NumpyVectorStore
 from helpdesk.api.health import router as health_router
@@ -183,6 +184,40 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         runtime_data_dir=settings.RUNTIME_DATA_DIR,
         seed_file_name=settings.TICKET_SEED_FILE,
     )
+    sheet_exporter = ExcelSheetExporter(
+        template_path=settings.SHEET_TEMPLATE_PATH,
+        output_path=settings.SHEET_OUTPUT_PATH,
+    )
+    # 起動時に見出し行を検査する（問題があれば警告を出すが起動は止めない）
+    try:
+        import openpyxl as _openpyxl
+
+        _wb = _openpyxl.load_workbook(settings.SHEET_TEMPLATE_PATH)
+        _header_row, _col_map = sheet_exporter._detect_header(_wb.worksheets[0])
+        if _header_row is None:
+            logger.warning(
+                "sheet_exporter: テンプレートに見出し行が見つかりません。"
+                "template_path=%s",
+                settings.SHEET_TEMPLATE_PATH,
+            )
+        else:
+            required = {"受付番号", "受付日時", "お客様名", "問い合わせ内容（要約）", "ステータス"}
+            missing = required - set(_col_map.keys())
+            if missing:
+                logger.warning(
+                    "sheet_exporter: テンプレートに必須見出しがありません: %s。"
+                    "template_path=%s",
+                    missing,
+                    settings.SHEET_TEMPLATE_PATH,
+                )
+    except Exception as _exc:
+        logger.warning(
+            "sheet_exporter: テンプレート検査でエラーが発生しました (%s)。"
+            "template_path=%s",
+            type(_exc).__name__,
+            settings.SHEET_TEMPLATE_PATH,
+        )
+    app.state.sheet_exporter = sheet_exporter
     app.state.rag_service = _load_rag_service(settings)
     app.state.llm = create_llm(settings)
     yield
