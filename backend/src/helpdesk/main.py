@@ -17,6 +17,8 @@ from helpdesk.adapters.embedding_mock import MockEmbeddingAdapter
 from helpdesk.adapters.factory import create_llm
 from helpdesk.adapters.ticket_json import JsonTicketRepository
 from helpdesk.adapters.vector_numpy import NumpyVectorStore
+from helpdesk.api.faq import load_faq_documents
+from helpdesk.api.faq import router as faq_router
 from helpdesk.api.health import router as health_router
 from helpdesk.api.masters import router as masters_router
 from helpdesk.api.rag import router as rag_router
@@ -185,6 +187,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     )
     app.state.rag_service = _load_rag_service(settings)
     app.state.llm = create_llm(settings)
+    app.state.faq_documents = load_faq_documents(settings.SEED_DATA_DIR)
+    logger.info("FAQ documents loaded: count=%d", len(app.state.faq_documents))
     yield
     # Shutdown: close resources
     rag_service = getattr(app.state, "rag_service", None)
@@ -373,6 +377,7 @@ app.include_router(health_router, prefix=settings.API_PREFIX)
 app.include_router(tickets_router, prefix=settings.API_PREFIX)
 app.include_router(masters_router, prefix=settings.API_PREFIX)
 app.include_router(rag_router, prefix=settings.API_PREFIX)
+app.include_router(faq_router, prefix=settings.API_PREFIX)
 
 # Serve frontend static files if the directory exists (ビルド不要の最小 UI)
 _FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent.parent / "frontend"

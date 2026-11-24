@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FAQ キーワード検索</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* FAQ ページ専用スタイル (.faq- プレフィックス) */
+    .faq-nav-link {
+      font-size: 13px;
+      color: #374151;
+      text-decoration: none;
+      padding: 5px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: #f3f4f6;
+    }
+    .faq-nav-link:hover { background: #e5e7eb; }
+
+    .faq-answer-pane { display: flex; flex-direction: column; gap: 12px; }
+    .faq-answer-title { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+    .faq-answer-category { font-size: 12px; color: #6b7280; margin-bottom: 8px; }
+
+    .faq-copy-row { display: flex; gap: 8px; align-items: flex-start; }
+    .faq-copy-row textarea { flex: 1; }
+
+    .faq-copy-btn { flex-shrink: 0; padding: 7px 14px; background: #fff;
+                    color: #374151; border: 1px solid #d1d5db; border-radius: 6px;
+                    font-size: 13px; align-self: flex-start; }
+    .faq-copy-btn:hover { background: #f3f4f6; }
+    .faq-copy-btn.copied { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+
+    .faq-unavailable { background: #fffbeb; border: 1px solid #fcd34d;
+                       border-radius: 6px; padding: 10px 14px;
+                       font-size: 13px; color: #92400e; }
+
+    .faq-empty { color: #9ca3af; font-size: 13px; padding: 16px; }
+
+    .faq-item-category { font-size: 11px; color: #9ca3af; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <span class="app-title">FAQ キーワード検索</span>
+    <span>
+      <a href="/" class="faq-nav-link">← ヘルプデスク</a>
+    </span>
+  </header>
+
+  <div class="layout">
+    <!-- 左ペイン: キーワード入力 + 候補リスト -->
+    <aside class="pane-left">
+      <div class="filter-row">
+        <input id="faqKeyword" type="text" placeholder="キーワードを入力…" autocomplete="off" />
+      </div>
+      <ul id="faqList" class="ticket-list">
+        <li class="faq-empty">キーワードを入力すると候補が表示されます</li>
+      </ul>
+    </aside>
+
+    <!-- 右ペイン: 回答表示 -->
+    <main class="pane-right" id="faqDetail">
+      <div id="faqNoSelection" class="no-selection">
+        <p>左の候補から FAQ を選択してください</p>
+      </div>
+
+      <div id="faqAnswerPane" class="hidden faq-answer-pane">
+        <div>
+          <div id="faqAnswerTitle" class="faq-answer-title"></div>
+          <div id="faqAnswerCategory" class="faq-answer-category"></div>
+        </div>
+
+        <!-- 回答あり: コピー可能なテキストエリア -->
+        <div id="faqCopyRow" class="faq-copy-row hidden">
+          <textarea id="faqAnswerText" rows="10" readonly></textarea>
+          <button id="faqCopyBtn" class="faq-copy-btn">コピー</button>
+        </div>
+
+        <!-- 回答なし: 警告メッセージ -->
+        <div id="faqUnavailable" class="faq-unavailable hidden">
+          回答文を抽出できませんでした。元の FAQ データを直接ご確認ください。
+        </div>
+      </div>
+
+      <!-- エラー表示 -->
+      <div id="faqErrorBox" class="error-box hidden"></div>
+
+      <!-- ローディング -->
+      <div id="faqLoading" class="loading hidden">検索中…</div>
+    </main>
+  </div>
+
+  <script src="faq.js"></script>
+</body>
+</html>
