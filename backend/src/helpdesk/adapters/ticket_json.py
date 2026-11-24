@@ -128,6 +128,17 @@ class JsonTicketRepository:
                     max_num = max(max_num, int(num_part))
         return f"TKT-{max_num + 1:08d}"
 
+    def add_new_tickets(self, tickets: list[Ticket]) -> int:
+        """まだ無い受付番号のチケットだけを追加する。既存チケット（担当者の更新済み）は上書きしない。"""
+        with self._lock:
+            new = [t for t in tickets if t.ticket_id not in self._tickets]
+            if not new:
+                return 0
+            for ticket in new:
+                self._tickets[ticket.ticket_id] = ticket
+            self._save_atomic()
+            return len(new)
+
     def create_ticket(self, data: TicketCreate) -> Ticket:
         with self._lock:
             ticket_id = self._generate_next_ticket_id()

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import time
@@ -15,6 +16,7 @@ from fastapi.staticfiles import StaticFiles
 
 from helpdesk.adapters.embedding_mock import MockEmbeddingAdapter
 from helpdesk.adapters.factory import create_llm
+from helpdesk.adapters.sheet_tickets import run_sheet_sync
 from helpdesk.adapters.ticket_json import JsonTicketRepository
 from helpdesk.adapters.vector_numpy import NumpyVectorStore
 from helpdesk.api.health import router as health_router
@@ -185,7 +187,20 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     )
     app.state.rag_service = _load_rag_service(settings)
     app.state.llm = create_llm(settings)
+    sync_task: asyncio.Task[None] | None = None
+    if settings.SHEET_SYNC_URL and settings.SHEET_SYNC_TOKEN:
+        sync_task = asyncio.create_task(
+            run_sheet_sync(
+                app.state.ticket_repository,
+                settings.SHEET_SYNC_URL,
+                settings.SHEET_SYNC_TOKEN,
+                settings.SHEET_SYNC_INTERVAL_SECONDS,
+            )
+        )
+        logger.info("Sheet sync enabled: interval=%ds", settings.SHEET_SYNC_INTERVAL_SECONDS)
     yield
+    if sync_task is not None:
+        sync_task.cancel()
     # Shutdown: close resources
     rag_service = getattr(app.state, "rag_service", None)
     if rag_service is not None:

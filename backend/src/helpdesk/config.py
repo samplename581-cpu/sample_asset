@@ -51,6 +51,11 @@ class Settings(BaseSettings):
     RUNTIME_DATA_DIR: str = "./data/runtime"
     INDEX_DIR: str = "./data/index"
 
+    # メール転記スプシ（GAS の doGet）からチケットを取り込む。URL 未設定なら無効
+    SHEET_SYNC_URL: str | None = None
+    SHEET_SYNC_TOKEN: str | None = None
+    SHEET_SYNC_INTERVAL_SECONDS: int = Field(default=60, ge=10, le=3600)
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
@@ -60,6 +65,16 @@ class Settings(BaseSettings):
         """TICKET_SEED_FILE は SEED_DATA_DIR 直下のファイル名だけを許可する。"""
         if Path(self.TICKET_SEED_FILE).name != self.TICKET_SEED_FILE:
             raise ValueError("TICKET_SEED_FILE must be a file name without directories")
+        return self
+
+    @model_validator(mode="after")
+    def validate_sheet_sync(self) -> Settings:
+        """スプシ連携は https の URL と合言葉がそろっているときだけ許可する。"""
+        if self.SHEET_SYNC_URL:
+            if not self.SHEET_SYNC_URL.startswith("https://"):
+                raise ValueError("SHEET_SYNC_URL must start with https://")
+            if not self.SHEET_SYNC_TOKEN:
+                raise ValueError("SHEET_SYNC_TOKEN is required when SHEET_SYNC_URL is set")
         return self
 
     @model_validator(mode="after")
