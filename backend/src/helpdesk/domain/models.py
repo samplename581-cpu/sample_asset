@@ -7,6 +7,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 TICKET_ID_PATTERN = re.compile(r"^[A-Z0-9][A-Z0-9_-]{2,39}$")
+DRIVE_FILE_ID_PATTERN = re.compile(r"[A-Za-z0-9_-]{10,100}")
 
 _EMAIL_PATTERN = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
 _ORDER_NUMBER_PATTERN = r"^[A-Z0-9-]{1,40}$"
@@ -47,7 +48,16 @@ class Ticket(BaseModel):
     notes: str | None = Field(None, max_length=4000)
     resolution: str | None = Field(None, max_length=10000)
     has_attachment: bool = False
+    # 添付写真の Google ドライブのファイルID（画面表示のみ。LLM・検索には渡さない）
+    attachment_file_ids: list[str] = Field(default_factory=list, max_length=10)
     version: int = Field(ge=1, default=1)
+
+    @field_validator("attachment_file_ids")
+    @classmethod
+    def _check_file_ids(cls, v: list[str]) -> list[str]:
+        if not all(DRIVE_FILE_ID_PATTERN.fullmatch(x) for x in v):
+            raise ValueError("invalid attachment file id")
+        return v
 
     @field_validator("ticket_id")
     @classmethod
@@ -156,10 +166,13 @@ class ClassificationSuggestion(BaseModel):
     handling_type: str | None = Field(None, max_length=40)
     assigned_team: str | None = Field(None, max_length=80)
     faq_id: str | None = Field(None, pattern=_FAQ_ID_PATTERN)
+    priority_reason: str | None = Field(None, max_length=200)
 
 
 class DraftAnswerResponse(BaseModel):
     draft_answer: str
+    # 専門部署へ引き継ぐ場合の社内向け転送文。引き継がない場合は None
+    forward_draft: str | None = None
     citations: list[Citation]
     classification_suggestion: ClassificationSuggestion | None = None
     needs_human_confirmation: bool = True

@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 import urllib.parse
 import urllib.request
 from datetime import UTC, datetime
@@ -15,7 +16,7 @@ from typing import Any
 
 import pydantic
 
-from helpdesk.domain.models import Ticket, build_ticket_title
+from helpdesk.domain.models import DRIVE_FILE_ID_PATTERN, Ticket, build_ticket_title
 from helpdesk.ports.ticket_repository import TicketRepository
 
 logger = logging.getLogger("helpdesk.adapters.sheet_tickets")
@@ -28,6 +29,24 @@ def _text(row: dict[str, Any], key: str) -> str | None:
     value = row.get(key)
     text = "" if value is None else str(value).strip()
     return text or None
+
+
+_DRIVE_HOSTS = {"drive.google.com", "docs.google.com"}
+_DRIVE_ID_IN_PATH = re.compile(r"/d/([A-Za-z0-9_-]{10,100})")
+
+
+def drive_file_ids(urls: Any) -> list[str]:
+    """GAS が返す添付画像のリンクから、Google ドライブのファイルIDだけを取り出す。それ以外のURLは捨てる。"""
+    ids: list[str] = []
+    for url in urls if isinstance(urls, list) else []:
+        parsed = urllib.parse.urlparse(str(url))
+        if parsed.scheme != "https" or parsed.hostname not in _DRIVE_HOSTS:
+            continue
+        m = _DRIVE_ID_IN_PATH.search(parsed.path)
+        file_id = m.group(1) if m else urllib.parse.parse_qs(parsed.query).get("id", [""])[0]
+        if DRIVE_FILE_ID_PATTERN.fullmatch(file_id) and file_id not in ids:
+            ids.append(file_id)
+    return ids[:10]
 
 
 def row_to_ticket(row: dict[str, Any]) -> Ticket:
@@ -54,6 +73,7 @@ def row_to_ticket(row: dict[str, Any]) -> Ticket:
             "product_name": product_name,
             "status": _text(row, "ステータス") or "未対応",
             "has_attachment": _text(row, "添付画像") is not None,
+            "attachment_file_ids": drive_file_ids(row.get("添付画像URL")),
             "version": 1,
         }
     )

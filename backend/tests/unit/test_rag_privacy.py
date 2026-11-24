@@ -167,6 +167,24 @@ async def test_suggestion_limited_to_master_choices() -> None:
 
 
 @pytest.mark.asyncio
+async def test_forward_draft_and_priority_reason() -> None:
+    text = (
+        '{"draft_answer": "担当者よりご連絡いたします。", '
+        '"forward_draft": "修理担当さま\\n脚の割れの対応をお願いします（S1）。", '
+        '"classification_suggestion": {"priority": "高", "priority_reason": "使えずケガのおそれ"}}'
+    )
+    res = await _rag().draft_answer(_CapturingLLM(text), "脚が割れた", 3, "rid", _settings())  # type: ignore[arg-type]
+    assert res.forward_draft == "修理担当さま\n脚の割れの対応をお願いします。"
+    assert res.classification_suggestion is not None
+    assert res.classification_suggestion.priority_reason == "使えずケガのおそれ"
+
+    text = '{"draft_answer": "ok", "forward_draft": "", "classification_suggestion": {"priority_reason": "x"}}'
+    res = await _rag().draft_answer(_CapturingLLM(text), "脚が割れた", 3, "rid", _settings())  # type: ignore[arg-type]
+    assert res.forward_draft is None
+    assert res.classification_suggestion is None  # 緊急度なしの理由だけは捨てる
+
+
+@pytest.mark.asyncio
 async def test_prompt_is_sectioned_with_citation_ids() -> None:
     llm = _CapturingLLM('{"draft_answer": "ok", "citation_ids": ["S1"]}')
     await _rag().draft_answer(llm, "配送日", 3, "rid", _settings())  # type: ignore[arg-type]

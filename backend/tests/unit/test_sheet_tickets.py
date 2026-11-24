@@ -41,6 +41,21 @@ def test_row_is_mapped_to_ticket() -> None:
     assert t.category is None
 
 
+def test_drive_file_ids_extracted_and_untrusted_urls_dropped() -> None:
+    fid = "1AbCdEfGhIjKlMnOpQrStUv"
+    urls = [
+        f"https://drive.google.com/file/d/{fid}/view?usp=drivesdk",
+        f"https://drive.google.com/open?id={fid}",  # 重複は1つに
+        "https://evil.example.com/file/d/1ZzZzZzZzZzZzZz/view",
+        "http://drive.google.com/file/d/1YyYyYyYyYyYyYy/view",
+        "javascript:alert(1)",
+    ]
+    tickets, _ = rows_to_tickets([_row(添付画像URL=urls)])
+    assert tickets[0].attachment_file_ids == [fid]
+    tickets, _ = rows_to_tickets([_row(添付画像URL="not-a-list")])
+    assert tickets[0].attachment_file_ids == []
+
+
 def test_empty_cells_become_none_and_no_photo() -> None:
     tickets, _ = rows_to_tickets([_row(注文番号="", 商品名="", 添付画像="", ステータス="")])
     t = tickets[0]

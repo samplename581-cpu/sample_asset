@@ -190,14 +190,19 @@ class RagService:
             "JSON で回答してください。\n"
             "{\n"
             '  "draft_answer": "...",\n'
+            '  "forward_draft": null,\n'
             '  "citation_ids": ["S1"],\n'
             '  "needs_human_confirmation": true,\n'
             '  "missing_information": [],\n'
             '  "classification_suggestion": {\n'
             '    "category": null, "priority": null, "handling_type": null,\n'
-            '    "assigned_team": null, "faq_id": null\n'
+            '    "assigned_team": null, "faq_id": null, "priority_reason": null\n'
             "  }\n"
             "}\n"
+            "専門部署へ引き継ぐ場合、draft_answer はお客様への一次回答（担当者から連絡する旨）にし、"
+            "forward_draft に担当部署あての社内向け転送文（用件・緊急度・状況）を書く。"
+            "引き継がない場合 forward_draft は null。\n"
+            "priority_reason には、緊急度をそう判断した理由を緊急度基準に沿って1文で書く。\n"
             "classification_suggestion は参照情報の分類基準に基づく提案であり、確定値ではありません。"
             f"{_choices_text(allowed_values)}"
         )
@@ -256,6 +261,12 @@ class RagService:
             )
 
         raw_answer = _strip_internal_notes(str(parsed_data.get("draft_answer") or llm_result.text))
+        raw_forward = parsed_data.get("forward_draft")
+        forward = (
+            _strip_internal_notes(raw_forward)
+            if isinstance(raw_forward, str) and raw_forward.strip()
+            else None
+        )
         raw_citation_ids = parsed_data.get("citation_ids") or []
         raw_missing = parsed_data.get("missing_information") or []
         if isinstance(raw_missing, str):
@@ -298,6 +309,7 @@ class RagService:
         # 10. DraftAnswerResponse を返す (needs_human_confirmation は常に True)
         return DraftAnswerResponse(
             draft_answer=raw_answer,
+            forward_draft=forward,
             citations=final_citations,
             classification_suggestion=suggestion,
             needs_human_confirmation=True,
@@ -374,6 +386,13 @@ def _parse_suggestion(
     # 引用に含まれるFAQ番号だけを許可する（存在しないFAQの捏造を防ぐ）
     values["faq_id"] = (
         faq if isinstance(faq, str) and _FAQ_ID_RE.match(faq) and faq in allowed_faq_ids else None
+    )
+    reason = raw.get("priority_reason")
+    # 緊急度が無ければ理由も出さない
+    values["priority_reason"] = (
+        reason.strip()[:200]
+        if values["priority"] and isinstance(reason, str) and reason.strip()
+        else None
     )
     if not any(values.values()):
         return None
