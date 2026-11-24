@@ -109,6 +109,15 @@
           <h3>回答案 <span class="draft-label">(Human Review が必要です)</span></h3>
           <div class="warning-box">⚠️ この回答は AI が生成した下書きです。必ず内容を確認してから使用してください。自動送信はされません。</div>
           <textarea id="draftText" rows="8"></textarea>
+          <div id="checkBox" class="warning-box hidden">
+            <strong>⚠️ 送る前に確認すること</strong>
+            <ul id="checkList"></ul>
+          </div>
+          <div id="suggestionArea" class="hidden">
+            <div id="suggestionBox" class="suggestion-box"></div>
+            <button id="btnApplySuggestion" class="btn-secondary" style="margin-top:6px">✅ 分類案をチケットに適用する</button>
+            <span id="applyResult" class="meta-text" style="margin-left:8px"></span>
+          </div>
           <h4>参照元</h4>
           <ul id="citationList" class="source-list"></ul>
           <p id="draftMeta" class="meta-text"></p>

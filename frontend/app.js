@@ -8,6 +8,7 @@ const API_BASE = (window.API_BASE_URL || "http://127.0.0.1:8000") + "/api/v1";
 
 // ── State ──────────────────────────────────────────────────────────────────
 let currentTicketId = null;
+let currentTicket = null;
 let nextCursor = null;
 let filterStatus = "";
 let isLoading = false;
@@ -179,6 +180,7 @@ function renderTicketItem(ticket) {
 // ── Ticket detail ──────────────────────────────────────────────────────────
 function selectTicket(ticket) {
   currentTicketId = ticket.ticket_id;
+  currentTicket = ticket;
   clearError();
   inquiryForm.classList.add("hidden");
 
@@ -280,7 +282,15 @@ btnDraft.addEventListener("click", async () => {
   if (!currentTicketId) return;
   clearError();
   showLoading();
-  draftSection.classList.add("hidden");
+
+  // ボタンクリック直後に「生成中」状態で表示してスクロール
+  draftText.value = "";
+  draftText.placeholder = "回答案を生成中です。しばらくお待ちください…";
+  citationList.innerHTML = "";
+  draftMeta.textContent = "";
+  renderChecks([]);
+  draftSection.classList.remove("hidden");
+  draftSection.scrollIntoView({ behavior: "smooth", block: "start" });
 
   try {
     const data = await apiFetch("/answers/draft", {
@@ -288,7 +298,13 @@ btnDraft.addEventListener("click", async () => {
       body: JSON.stringify({ ticket_id: currentTicketId, top_k: 5 }),
     });
 
-    draftText.value = data.draft_answer || "";
+    draftText.placeholder = "";
+    const customerName = currentTicket?.customer_name || "";
+    const subject = currentTicket?.title || "お問い合わせの件";
+    const greeting = customerName ? `${customerName} 様\n\n` : "お客様\n\n";
+    const body = data.draft_answer || "";
+    const signature = "\n\n---\n問い合わせ窓口担当\n";
+    draftText.value = `件名：Re: ${subject}\n\n${greeting}${body}${signature}`;
 
     citationList.innerHTML = "";
     if (data.citations && data.citations.length > 0) {
@@ -300,29 +316,47 @@ btnDraft.addEventListener("click", async () => {
     }
 
     renderSuggestion(data.classification_suggestion);
+    renderChecks(data.missing_information);
 
     const meta = data.metadata || {};
     draftMeta.textContent =
       `Provider: ${meta.provider || "—"} | Model: ${meta.model || "—"} | Request ID: ${meta.request_id || "—"}`;
 
-    draftSection.classList.remove("hidden");
   } catch (e) {
+    draftText.placeholder = "";
+    draftSection.classList.add("hidden");
     showError("回答案の生成に失敗しました: " + e.message);
   } finally {
     hideLoading();
   }
 });
 
+// LLM が挙げた確認事項（missing_information）を、送信前チェックとして表示する
+function renderChecks(items) {
+  const box = document.getElementById("checkBox");
+  const list = document.getElementById("checkList");
+  list.innerHTML = "";
+  const checks = (Array.isArray(items) ? items : []).filter(s => typeof s === "string" && s.trim());
+  checks.forEach(s => {
+    const li = document.createElement("li");
+    li.textContent = s;
+    list.appendChild(li);
+  });
+  box.classList.toggle("hidden", checks.length === 0);
+}
+
+let currentSuggestion = null;
+
 function renderSuggestion(suggestion) {
-  let box = document.getElementById("suggestionBox");
-  if (!box) {
-    box = document.createElement("div");
-    box.id = "suggestionBox";
-    box.className = "suggestion-box";
-    draftText.parentNode.insertBefore(box, draftText);
-  }
+  const area = document.getElementById("suggestionArea");
+  const box  = document.getElementById("suggestionBox");
+  const applyResult = document.getElementById("applyResult");
+
+  currentSuggestion = suggestion || null;
+  applyResult.textContent = "";
+
   if (!suggestion) {
-    box.classList.add("hidden");
+    area.classList.add("hidden");
     return;
   }
   const label = { category: "カテゴリ", priority: "緊急度", handling_type: "対応区分",
@@ -330,9 +364,42 @@ function renderSuggestion(suggestion) {
   const parts = Object.keys(label)
     .filter(k => suggestion[k])
     .map(k => `${label[k]}: ${suggestion[k]}`);
-  box.textContent = "分類案（確定値ではありません。担当者が確認してください） " + parts.join(" / ");
-  box.classList.remove("hidden");
+  box.textContent = "分類案（確定値ではありません） " + parts.join(" / ");
+  area.classList.remove("hidden");
 }
+
+// ── Apply suggestion ────────────────────────────────────────────────────────
+document.getElementById("btnApplySuggestion").addEventListener("click", async () => {
+  if (!currentTicketId || !currentSuggestion || !currentTicket) return;
+  const applyResult = document.getElementById("applyResult");
+  applyResult.textContent = "適用中…";
+
+  try {
+    const payload = {
+      version: currentTicket.version,
+      ...(currentSuggestion.category     && { category:      currentSuggestion.category }),
+      ...(currentSuggestion.priority     && { priority:      currentSuggestion.priority }),
+      ...(currentSuggestion.handling_type && { handling_type: currentSuggestion.handling_type }),
+      ...(currentSuggestion.assigned_team && { assigned_team: currentSuggestion.assigned_team }),
+      ...(currentSuggestion.faq_id       && { faq_id:        currentSuggestion.faq_id }),
+    };
+    const updated = await apiFetch("/tickets/" + currentTicketId, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+    currentTicket = updated;
+    // 画面上のメタ情報も更新
+    detailMeta.textContent = [
+      "お客様: " + (updated.customer_name || "—"),
+      "商品: " + (updated.product_name || "—"),
+      "カテゴリ: " + (updated.category || "未判定"),
+      "緊急度: " + (updated.priority || "未判定"),
+    ].join(" | ");
+    applyResult.textContent = "✅ 適用しました";
+  } catch (e) {
+    applyResult.textContent = "❌ 適用失敗: " + e.message;
+  }
+});
 
 // ── Inquiry form ───────────────────────────────────────────────────────────
 
