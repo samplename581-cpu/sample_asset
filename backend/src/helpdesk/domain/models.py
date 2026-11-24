@@ -15,7 +15,10 @@ _FAQ_ID_PATTERN = r"^FAQ-[0-9]{2,4}$"
 
 def build_ticket_title(product_name: str | None, description: str) -> str:
     """商品名と問い合わせ内容の先頭部分から互換用 title を生成する。"""
-    head = " ".join(description.split())[:40]
+    text = " ".join(description.split())
+    # メール本文全体が入る場合に備え、最初の1文を使い、それでも長ければ「…」で切る
+    first = text.split("。", 1)[0]
+    head = first if len(first) <= 40 else first[:39] + "…"
     title = f"{product_name}: {head}" if product_name else head
     return title[:200]
 

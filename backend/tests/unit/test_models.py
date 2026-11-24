@@ -168,6 +168,9 @@ def test_build_ticket_title() -> None:
     assert build_ticket_title("ソファ", "配送日を変更したい") == "ソファ: 配送日を変更したい"
     assert build_ticket_title(None, "a\n b") == "a b"
     assert len(build_ticket_title("p" * 200, "x" * 100)) <= 200
+    body = "昨日届いたベッドフレームの脚が1本割れていて、ぐらぐらして使えません。小さい子どもがいるので心配です。"
+    assert build_ticket_title(None, body) == "昨日届いたベッドフレームの脚が1本割れていて、ぐらぐらして使えません"
+    assert build_ticket_title(None, "あ" * 50) == "あ" * 39 + "…"
 
 
 class TestTicketUpdate:
