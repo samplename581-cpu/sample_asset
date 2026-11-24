@@ -103,28 +103,6 @@ const DROPDOWNS = {
 
 
 /* ========================================
-   フォームの問い合わせ種類からカテゴリへ変換
-======================================== */
-
-function getCategory(inquiryType) {
-  const type = String(inquiryType ?? "").trim();
-  const categoryMap = new Map([
-    ["配送について", "配送関連"],
-    ["商品の傷・不具合", "商品不良・破損"],
-    ["組み立て・使い方", "組み立て・使い方"],
-    ["注文の変更・キャンセル", "注文変更・キャンセル"],
-    ["店舗・在庫", "店舗・在庫"],
-    ["その他", "その他"],
-    // 以前のテストメールにも対応
-    ["配送関連", "配送関連"],
-    ["商品不良・破損", "商品不良・破損"],
-    ["注文変更・キャンセル", "注文変更・キャンセル"]
-  ]);
-  return categoryMap.get(type) || "";
-}
-
-
-/* ========================================
    メイン処理
 ======================================== */
 
@@ -235,8 +213,6 @@ function importGmailToSheet() {
 
             step = "スプレッドシート登録";
 
-            const category = getCategory(data["お問い合わせの種類"]);
-
             const row = [
               safeText(receptionNumber),             // A
               receptionDate,                         // B
@@ -246,7 +222,7 @@ function importGmailToSheet() {
               safeText(data["商品名"]),               // F
               safeText(data["問い合わせ内容（要約）"]), // G
 
-              category,    // H カテゴリ（フォームから自動入力）
+              "",          // H カテゴリ（担当者が手入力）
               "",          // I 緊急度
               "",          // J 対応区分
               "",          // K 担当
@@ -340,21 +316,6 @@ function importGmailToSheet() {
               }
             }
 
-            // 未知・空欄の種類でも問い合わせを取りこぼさない。
-            // H列は空欄にして、担当者が確認できるようログへ記録する。
-            if (!category) {
-              try {
-                logError(
-                  ss, receptionNumber, message.getSubject(), messageId,
-                  "カテゴリ判定",
-                  new Error("お問い合わせの種類が未設定または未対応：" +
-                    (data["お問い合わせの種類"] || "（空欄）"))
-                );
-              } catch (logErr) {
-                console.error("カテゴリ判定のログ記録失敗：" + logErr.message);
-              }
-            }
-
           } catch (error) {
 
             logError(
@@ -413,8 +374,6 @@ function parseMailBody(body) {
   MAIL_FIELDS.forEach(field => {
     result[field.header] = "";
   });
-  // 管理表に列を増やさず、カテゴリ判定にだけ使用する。
-  result["お問い合わせの種類"] = "";
 
   const lines = body
     .replace(/\r\n?/g, "\n")
@@ -436,12 +395,8 @@ function parseMailBody(body) {
 
     if (line.startsWith("📎")) continue;
 
-    // フォームの種類を取得（全角・半角コロン、空白に対応）。
-    const typeMatch = line.match(/^お問い合わせの種類\s*[:：]\s*(.*)$/);
-    if (typeMatch) {
-      result["お問い合わせの種類"] = typeMatch[1].trim();
-      continue;
-    }
+    // フォームの種類は管理表へ自動入力しない。
+    if (/^お問い合わせの種類\s*[:：]/.test(line)) continue;
 
     for (const field of MAIL_FIELDS) {
       if (!line.startsWith(field.label)) continue;
