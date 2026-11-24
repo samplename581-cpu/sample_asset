@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
@@ -27,11 +28,26 @@ def test_openapi_yaml_is_valid() -> None:
 
 
 @pytest.fixture(scope="module")
-def client() -> TestClient:
+def client(tmp_path_factory: pytest.TempPathFactory) -> TestClient:
+    from helpdesk.config import get_settings
     from helpdesk.main import app
 
-    with TestClient(app) as c:
-        yield c
+    # 本物の data/runtime に書き込まない・スプシ連携を動かさない
+    runtime = tmp_path_factory.mktemp("runtime")
+    saved = {k: os.environ.get(k) for k in ("RUNTIME_DATA_DIR", "SHEET_SYNC_URL")}
+    os.environ["RUNTIME_DATA_DIR"] = str(runtime)
+    os.environ["SHEET_SYNC_URL"] = ""
+    get_settings.cache_clear()
+    try:
+        with TestClient(app) as c:
+            yield c
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+        get_settings.cache_clear()
 
 
 def test_list_tickets_response_shape(client: TestClient) -> None:
