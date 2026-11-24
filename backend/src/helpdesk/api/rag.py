@@ -3,14 +3,16 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 
+from helpdesk.api.masters import read_master
 from helpdesk.config import Settings, get_settings
+from helpdesk.domain.errors import HelpdeskError
 from helpdesk.domain.models import (
     DraftAnswerRequest,
     DraftAnswerResponse,
     SearchResponse,
 )
 from helpdesk.ports.llm import ChatMessage, LLMPort
-from helpdesk.services.rag_service import RagService, build_ticket_query
+from helpdesk.services.rag_service import RagService, build_ticket_facts, build_ticket_query
 from helpdesk.services.ticket_service import TicketService
 
 router = APIRouter(tags=["rag"])
@@ -78,9 +80,13 @@ async def create_draft_answer(
     ticket_service: TicketService = Depends(get_ticket_service),
     settings: Settings = Depends(get_settings),
 ) -> DraftAnswerResponse:
+    facts: str | None = None
+    order_registered = False
     if request.ticket_id:
         ticket = ticket_service.get_ticket(request.ticket_id)
         query = build_ticket_query(ticket)
+        facts = build_ticket_facts(ticket)
+        order_registered = ticket.order_number is not None
     else:
         query = request.question or ""
 
@@ -91,7 +97,33 @@ async def create_draft_answer(
         top_k=request.top_k,
         request_id=request_id,
         settings=settings,
+        ticket_facts=facts,
+        order_registered=order_registered,
+        allowed_values=_suggestion_choices(settings),
     )
+
+
+# 分類提案の項目 -> マスタ名
+_SUGGESTION_MASTERS = {
+    "category": "categories",
+    "priority": "priorities",
+    "handling_type": "handling-types",
+    "assigned_team": "support-teams",
+}
+
+
+def _suggestion_choices(settings: Settings) -> dict[str, list[str]] | None:
+    """マスタから分類提案の選択肢を作る。マスタが読めなければ None（選択肢の制約なし）。"""
+    try:
+        return {
+            key: [
+                str(v) for item in read_master(settings, master)
+                for k, v in item.items() if k.endswith("_name")
+            ]
+            for key, master in _SUGGESTION_MASTERS.items()
+        }
+    except HelpdeskError:
+        return None
 
 
 @router.post("/llm/generate", response_model=GenerateResponse)

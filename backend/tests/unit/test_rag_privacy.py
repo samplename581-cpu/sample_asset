@@ -13,7 +13,7 @@ from helpdesk.config import Settings
 from helpdesk.domain.models import Ticket
 from helpdesk.ports.llm import ChatMessage, LLMResult
 from helpdesk.ports.vector_store import ChunkRecord
-from helpdesk.services.rag_service import RagService, build_ticket_query
+from helpdesk.services.rag_service import RagService, build_ticket_facts, build_ticket_query
 
 NAME = "秘密 太郎"
 EMAIL = "secret.taro@example.com"
@@ -103,6 +103,67 @@ async def test_prompt_and_logs_contain_no_personal_data(caplog: pytest.LogCaptur
         assert secret not in prompt
         assert secret not in caplog.text
         assert secret not in res.model_dump_json()
+
+
+@pytest.mark.asyncio
+async def test_ticket_facts_reach_prompt_without_values() -> None:
+    t = _ticket()
+    facts = build_ticket_facts(t)
+    assert ORDER not in facts
+    assert "注文番号: 登録済み" in facts and "写真の添付: あり" in facts
+    assert "未登録" in build_ticket_facts(t.model_copy(update={"order_number": None}))
+
+    llm = _CapturingLLM('{"draft_answer": "ok", "citation_ids": ["S1"]}')
+    await _rag().draft_answer(  # type: ignore[arg-type]
+        llm, build_ticket_query(t), 3, "rid", _settings(), ticket_facts=facts
+    )
+    prompt = llm.messages[-1].content
+    assert "<ticket_facts>" in prompt and ORDER not in prompt
+
+
+@pytest.mark.asyncio
+async def test_internal_notes_are_stripped_from_draft() -> None:
+    text = (
+        '{"draft_answer": "ご注文どおりの色でございます（S1）。\\n\\n※[S1]を参照しました。\\n'
+        'よろしくお願いいたします[S2、S3]。", "citation_ids": ["S1"]}'
+    )
+    res = await _rag().draft_answer(_CapturingLLM(text), "色が違う", 3, "rid", _settings())  # type: ignore[arg-type]
+    assert res.draft_answer == "ご注文どおりの色でございます。\n\nよろしくお願いいたします。"
+    assert [c.citation_id for c in res.citations] == ["S1"]  # 参照元の表示は残す
+
+
+@pytest.mark.asyncio
+async def test_order_number_requests_removed_when_registered() -> None:
+    text = (
+        '{"draft_answer": "色について確認いたします。注文番号をお知らせいただけますでしょうか。'
+        'また、商品の写真をお送りください。", "missing_information": ["注文番号", "商品の写真"]}'
+    )
+    res = await _rag().draft_answer(  # type: ignore[arg-type]
+        _CapturingLLM(text), "色が違う", 3, "rid", _settings(), order_registered=True
+    )
+    assert res.draft_answer == "色について確認いたします。また、商品の写真をお送りください。"
+    assert res.missing_information == ["商品の写真"]
+
+    res = await _rag().draft_answer(_CapturingLLM(text), "色が違う", 3, "rid", _settings())  # type: ignore[arg-type]
+    assert "注文番号をお知らせ" in res.draft_answer  # 未登録なら聞いてよい
+
+
+@pytest.mark.asyncio
+async def test_suggestion_limited_to_master_choices() -> None:
+    text = (
+        '{"draft_answer": "ok", "classification_suggestion": {"category": "商品の不具合・不良", '
+        '"priority": "高", "assigned_team": "カスタマーサポート"}}'
+    )
+    allowed = {"category": ["商品不良・破損"], "priority": ["高", "中", "低"], "assigned_team": ["窓口担当"]}
+    llm = _CapturingLLM(text)
+    res = await _rag().draft_answer(  # type: ignore[arg-type]
+        llm, "脚が割れた", 3, "rid", _settings(), allowed_values=allowed
+    )
+    assert "- category: 商品不良・破損" in llm.messages[-1].content
+    assert res.classification_suggestion is not None
+    assert res.classification_suggestion.category is None
+    assert res.classification_suggestion.priority == "高"
+    assert res.classification_suggestion.assigned_team is None
 
 
 @pytest.mark.asyncio
